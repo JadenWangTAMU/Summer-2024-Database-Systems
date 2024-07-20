@@ -50,3 +50,6 @@ class Transaction(db.Model):
     buyer_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
     seller_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
     timestamp=db.Column(db.Datetime)
+
+if __name__ == '__main__':
+    app.run()
