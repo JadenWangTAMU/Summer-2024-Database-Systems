@@ -17,27 +17,28 @@ app.app_context().push()
 def hello():
     return "Hello, World!"
 
-class Art_Piece(db.Model):
+
+class art_piece(db.Model):
     piece_id=db.Column(db.Integer, primary_key=True)
-    creator_id = db.Column(db.Integer, db.ForeignKey('Creator.Creator_ID'))
-    user_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
+    creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     title=db.Column(db.String(100))
     year_finished=db.Column(db.Integer)
     cost=db.Column(db.Float)
-    description=db.Column(db.String(100))
+    description=db.Column(db.String(200))
     photo_link=db.Column(db.String(200))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
 
-class Creator(db.Model):
+class creator(db.Model):
     creator_id=db.Column(db.Integer, primary_key=True)
     creator_fname=db.Column(db.String(100))
     creator_lname=db.Column(db.String(100))
     birth_country=db.Column(db.String(100))
-    birth_date=db.Column(db.String(100))
-    death_date=db.Column(db.String(100))
+    birth_date=db.Column(db.Date)
+    death_date=db.Column(db.Date)
 
-class User(db.Model):
+class user(db.Model):
     user_id=db.Column(db.Integer, primary_key=True)
     user_fname=db.Column(db.String(100))
     user_lname=db.Column(db.String(100))
@@ -45,10 +46,11 @@ class User(db.Model):
     password=db.Column(db.String(100))
     role=db.Column(db.String(100))
 
-class Transaction(db.Model):
+class transaction(db.Model):
     transaction_id=db.Column(db.Integer, primary_key=True)
-    buyer_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
-    seller_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
+    piece_id = db.Column(db.Integer, db.ForeignKey('art_piece.piece_id'))
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    seller_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     timestamp=db.Column(db.DateTime)
 
 if __name__ == '__main__':
