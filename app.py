@@ -6,7 +6,7 @@ from sqlalchemy import exc
 import psycopg2
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:gekkouga658Postgres@localhost/artfolio_db' #replace with your own file
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:<password>@localhost/artfolio_db' #replace with your own password
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
 
