@@ -49,7 +49,7 @@ class Transaction(db.Model):
     transaction_id=db.Column(db.Integer, primary_key=True)
     buyer_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
     seller_id = db.Column(db.Integer, db.ForeignKey('User.User_ID'))
-    timestamp=db.Column(db.Datetime)
+    timestamp=db.Column(db.DateTime)
 
 if __name__ == '__main__':
     app.run()
