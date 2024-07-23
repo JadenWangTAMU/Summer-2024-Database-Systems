@@ -7,7 +7,7 @@ from datetime import datetime
 import psycopg2
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password!@localhost:5432/artfolio'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password!@localhost:5432/artfolio_db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
 
@@ -24,7 +24,7 @@ class art_piece(db.Model):
     photo_link=db.Column(db.String(200))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
-    
+
 class creator(db.Model):
     creator_id=db.Column(db.Integer, primary_key=True)
     creator_fname=db.Column(db.String(100))
