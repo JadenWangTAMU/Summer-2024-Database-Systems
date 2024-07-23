@@ -2,8 +2,8 @@
 
 
 To create the tables specified in the model (run this in terminal):
-`$ python3
-$ from app import app, db
+`$ python3`
+`$ from app import app, db
   with app.app_context():
     db.create_all()`
 
