@@ -24,7 +24,7 @@ class art_piece(db.Model):
     photo_link=db.Column(db.String(200))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
-
+    
 class creator(db.Model):
     creator_id=db.Column(db.Integer, primary_key=True)
     creator_fname=db.Column(db.String(100))
