@@ -6,6 +6,11 @@
     <title>Paintings</title>
     <style>
         body {
+            background-image: url("{{ url_for('static', filename='wallpaper.png') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -14,8 +19,9 @@
             margin: 0;
         }
         .container {
-            width: 20%;
-            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.76);
+            width: 30%;
+            border-radius: 1vh;
             text-align: center;
         }
         .pagination {
@@ -34,55 +40,126 @@
             margin: 0 1vh; /* Add space between links */
             text-decoration: none; /* Remove underline from links */
         }
+        .painting-title{
+            font-size: 5vh;
+            background-color: rgba(0, 0, 0, 0.229);
+            border-radius: 1vh;
+        }
+        .painting-details{
+            font-size: 3vh;
+        }
+        .painting-item{
+            margin-bottom: 10vh;
+        }
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .search-button {
+            font-size: 3vh;
+            padding: 1vh;
+            border-radius: 1vh;
+            border: 0;
+            background-color: rgba(0, 0, 0, 0.229);
+            cursor: pointer;
+        }
+        .search-input {
+            font-size: 3vh;
+            padding: 1vh;
+            border-radius: 1vh;
+            border: 0;
+            margin-bottom: 2vh;
+        }
+        .search-button-reset{
+            font-size: 3vh;
+            padding: 1vh;
+            border-radius: 1vh;
+            border: 0;
+            background-color: rgba(0, 0, 0, 0.229);
+            cursor: pointer;
+            margin-top: 2vh;
+        }
+        .no-results{
+            font-size: 5vh;
+        }
+        .painting-list{
+            list-style: none;
+            padding: 0;
+        }
+        .page-title{
+            font-size: 5vh;
+            margin-top: 3vh;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
 
-        <h1>Our Current Pieces</h1>
+        <h1 class="page-title">Our Current Pieces</h1>
 
         <div class="pagination">
-            <span>Page {{pagination.page}} of {{ pagination.pages}}</span>
+            <span>Page {{pagination.page}} of {{pagination.pages}}</span>
             <div class="pagination-buttons">
                 {% if pagination.has_prev %}
-                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num) }}">Previous</a>
+                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num, query=query, sort_by = sort_by) }}">Previous</a>
                 {% endif %}
                 {% if pagination.has_next %}
-                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num) }}">Next</a>
+                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num, query=query, sort_by = sort_by) }}">Next</a>
                 {% endif %}
             </div>
         </div>
 
-        <ul>
+        <form id = "search-form" class="search-form" action="/paintings" method = "get">
+            <input type="text" name="query" value = "{{ query }}" placeholder="Search paintings..." class="search-input">
+            <select id = "sort-by" name="sort_by" class = "search-input">
+                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort by Title</option>
+                <option value="year" {% if sort_by == 'year' %}selected{% endif %}> Sort by Year</option>
+            </select>
+            <button type="submit" class = "search-button">Search</button>
+            <a href = "/paintings" class="search-button-reset">Reset Search</a>
+        </form>
+
+        {% if paintings %}
+        <ul class="painting-list">
             {% for painting in paintings %}
-                <li>
-                    <h2>{{ painting.title }}</h2>
-                    <p>Artist:
+                <li class="painting-item">
+                    <h2 class="painting-title">{{ painting.title }}</h2>
+                    <p class="painting-details">Artist:
                         {% for creator in creators %}
                             {% if creator.creator_id == painting.creator_id %}
                                 {{creator.creator_fname}} {{creator.creator_lname}}
                             {% endif %}
                         {% endfor %}
                     </p>
-                    <p>Year: {{ painting.year_finished }}</p>
-                    <p>Description: {{ painting.description }}</p>
-                    <p>Price: ${{ painting.cost }}</p>
-                    <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 500px; max-height: 500px;">
+                    <p class="painting-details">Year: {{ painting.year_finished }}</p>
+                    <p class="painting-details">Description: {{ painting.description }}</p>
+                    <p class="painting-details">Price: ${{ painting.cost }}</p>
+                    <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 50vh; max-height: 50vh;">
                 </li>
             {% endfor %}
-        </ol>
-
+        </ul>
+        {% else %}
+        <p class="no-results">No paintings found for your search query.</p>
+        <a href = "/paintings" class="no-results">Go back to all paintings</a>
+        {% endif %}
         <div class="pagination">
             <span>Page {{pagination.page}} of {{pagination.pages}}</span>
             <div class="pagination-buttons">
                 {% if pagination.has_prev %}
-                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num) }}">Previous</a>
+                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num, query=query, sort_by = sort_by) }}">Previous</a>
                 {% endif %}
                 {% if pagination.has_next %}
-                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num) }}">Next</a>
+                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num, query=query, sort_by = sort_by) }}">Next</a>
                 {% endif %}
             </div>
         </div>
+        <script>
+            document.getElementById('sort-by').addEventListener('change', function(){
+                document.getElementById('search-form').submit();
+            });
+        </script>
     </div>
 </body>
 </html>

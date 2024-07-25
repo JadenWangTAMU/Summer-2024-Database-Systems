@@ -52,13 +52,27 @@ class transaction(db.Model):
 def index():
     return render_template("index.html")
 
-@app.route('/paintings')
+@app.route('/paintings', methods = ['GET'])
 def paintings():
     page = request.args.get('page', 1, type=int)
+    query = request.args.get('query', '', type=str)
+    sort_by = request.args.get('sort_by', 'title', type=str)
     per_page = 5
-    paintings_pagination = art_piece.query.paginate(page=page, per_page=per_page)
+
+    if query:
+        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
+    else:
+        paintings_query = art_piece.query
+
+    if sort_by == 'title':
+        paintings_query = paintings_query.order_by(art_piece.title)
+    elif sort_by == 'year':
+        paintings_query = paintings_query.order_by(art_piece.year_finished)
+    
+
+    paintings = paintings_query.paginate(page=page, per_page=per_page)
     all_creators = creator.query.all()
-    return render_template("paintings.html", paintings = paintings_pagination.items, creators = all_creators, pagination = paintings_pagination)
+    return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
 
 def init_db():
     with app.app_context():
