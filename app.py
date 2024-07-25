@@ -54,30 +54,41 @@ def index():
 
 @app.route('/paintings', methods = ['GET'])
 def paintings():
+    #used for page stuff
     page = request.args.get('page', 1, type=int)
     query = request.args.get('query', '', type=str)
     sort_by = request.args.get('sort_by', 'title', type=str)
+    #can change this to whatever, decides how many paintings are shown per page
     per_page = 5
 
+    # does the user want to search for a painting?
     if query:
+        #filter based on what they searched for
         paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
     else:
+        #else just get all the paintings
         paintings_query = art_piece.query
-
+    
+    #find out how the user wants to sort the paintings and sort accordingly
     if sort_by == 'title':
         paintings_query = paintings_query.order_by(art_piece.title)
     elif sort_by == 'year':
         paintings_query = paintings_query.order_by(art_piece.year_finished)
     
-
+    #paginate the paintings (basically separates them into pages)
     paintings = paintings_query.paginate(page=page, per_page=per_page)
+    #get all the creators so we can display the artist of each painting
     all_creators = creator.query.all()
+    #render the paintings page with all the required info
     return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
 
+
+#not sure if this actually initalizes the database
 def init_db():
     with app.app_context():
         db.create_all()
 
+#this is the main function that runs the app
 if __name__ == '__main__':
     init_db()
     app.run(debug = True)
