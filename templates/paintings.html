@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paintings</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 20%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .pagination {
+            font-size: xx-large; /* Increase font size */
+            margin-bottom: 3vh; /* Add space below pagination */
+            margin-top: 3vh; /* Add space above pagination */
+            border: 1vh rgba(0, 0, 0, 0.5); /* Add border around pagination */
+            background-color: rgba(0, 0, 0, 0.229); /* Add background color to pagination */
+            border-radius: 1vh; /* Add border radius to pagination */
+            text-align: center; /* Center text in pagination */
+        }
+        .pagination-buttons {
+            margin-top: 1vh; /* Add space above buttons */
+        }
+        .pagination-button {
+            margin: 0 1vh; /* Add space between links */
+            text-decoration: none; /* Remove underline from links */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <h1>Our Current Pieces</h1>
+
+        <div class="pagination">
+            <span>Page {{pagination.page}} of {{ pagination.pages}}</span>
+            <div class="pagination-buttons">
+                {% if pagination.has_prev %}
+                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num) }}">Previous</a>
+                {% endif %}
+                {% if pagination.has_next %}
+                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num) }}">Next</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <ul>
+            {% for painting in paintings %}
+                <li>
+                    <h2>{{ painting.title }}</h2>
+                    <p>Artist:
+                        {% for creator in creators %}
+                            {% if creator.creator_id == painting.creator_id %}
+                                {{creator.creator_fname}} {{creator.creator_lname}}
+                            {% endif %}
+                        {% endfor %}
+                    </p>
+                    <p>Year: {{ painting.year_finished }}</p>
+                    <p>Description: {{ painting.description }}</p>
+                    <p>Price: ${{ painting.cost }}</p>
+                    <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 500px; max-height: 500px;">
+                </li>
+            {% endfor %}
+        </ol>
+
+        <div class="pagination">
+            <span>Page {{pagination.page}} of {{pagination.pages}}</span>
+            <div class="pagination-buttons">
+                {% if pagination.has_prev %}
+                <a class = "pagination-button" href="{{ url_for('paintings',page=pagination.prev_num) }}">Previous</a>
+                {% endif %}
+                {% if pagination.has_next %}
+                <a class = "pagination-button" href="{{ url_for('paintings', page=pagination.next_num) }}">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

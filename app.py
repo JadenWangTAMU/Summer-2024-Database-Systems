@@ -21,7 +21,7 @@ class art_piece(db.Model):
     year_finished=db.Column(db.Integer)
     cost=db.Column(db.Float)
     description=db.Column(db.String(200))
-    photo_link=db.Column(db.String(200))
+    photo_link=db.Column(db.String(1000))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
 
@@ -49,8 +49,16 @@ class transaction(db.Model):
     timestamp=db.Column(db.DateTime, default=datetime.utcnow)
 
 @app.route("/")
-def hello():
-    return "Hello, World!"
+def index():
+    return render_template("index.html")
+
+@app.route('/paintings')
+def paintings():
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    paintings_pagination = art_piece.query.paginate(page=page, per_page=per_page)
+    all_creators = creator.query.all()
+    return render_template("paintings.html", paintings = paintings_pagination.items, creators = all_creators, pagination = paintings_pagination)
 
 def init_db():
     with app.app_context():
