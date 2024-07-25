@@ -3,29 +3,27 @@ from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 from sqlalchemy import exc
+from datetime import datetime
 import psycopg2
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:<password>@localhost/artfolio_db' #replace with your own password
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:gekkouga658Postgres@localhost:5432/artfolio_db' #replace with your own file
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:gekkouga658Postgres@localhost/artfolio_db' #replace with your own file
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
 
 db = SQLAlchemy(app)
 app.app_context().push()
 
-@app.route("/")
-def hello():
-    return "Hello, World!"
-
 class art_piece(db.Model):
     piece_id=db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     title=db.Column(db.String(100))
     year_finished=db.Column(db.Integer)
     cost=db.Column(db.Float)
-    description=db.Column(db.String(100))
-    photo_link=db.Column(db.String(200))
+    description=db.Column(db.String(200))
+    photo_link=db.Column(db.String(1000))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
 
@@ -43,86 +41,52 @@ class user(db.Model):
     user_lname=db.Column(db.String(100))
     email=db.Column(db.String(100))
     password=db.Column(db.String(100))
-    role=db.Column(db.String(100))
+    role=db.Column(db.String(1))
 
 class transaction(db.Model):
     transaction_id=db.Column(db.Integer, primary_key=True)
     buyer_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     seller_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
-    timestamp=db.Column(db.Datetime)
+    timestamp=db.Column(db.DateTime, default=datetime.utcnow)
 
 @app.route("/")
-def hello():
-    return "Hello, World!"
+def index():
+    return render_template("index.html")
 
 if __name__ == '__main__':
     app.run(debug = True)
 
-def get_art_pieces():
-    query = select(art_piece)
-    result = db.session.execute(query)
+@app.route('/paintings', methods = ['GET'])
+def paintings():
+    #used for page stuff
+    page = request.args.get('page', 1, type=int)
+    query = request.args.get('query', '', type=str)
+    sort_by = request.args.get('sort_by', 'title', type=str)
+    #can change this to whatever, decides how many paintings are shown per page
+    per_page = 5
 
-    art_piece_list = []
-    for art_piece in result.scalars():
-        art_piece_list.append((art_piece.cname, art_piece.addr, art_piece.phone))
+    # does the user want to search for a painting?
+    if query:
+        #filter based on what they searched for
+        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
+    else:
+        #else just get all the paintings
+        paintings_query = art_piece.query
     
-    for art_piece in result.scalars():
-        creator_id = art_piece.creator_id
-        user_id = art_piece.user_id
+    #find out how the user wants to sort the paintings and sort accordingly
+    if sort_by == 'title':
+        paintings_query = paintings_query.order_by(art_piece.title)
+    elif sort_by == 'year':
+        paintings_query = paintings_query.order_by(art_piece.year_finished)
+    
+    #paginate the paintings (basically separates them into pages)
+    paintings = paintings_query.paginate(page=page, per_page=per_page)
+    #get all the creators so we can display the artist of each painting
+    all_creators = creator.query.all()
+    #render the paintings page with all the required info
+    return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
 
-        creator = get_creator_fromid(creator_id)
-        user = get_user_fromid(user_id)
-
-        art_piece_list.append((creator.fname, creator.lname, user.fname, user.lname, art_piece.title, art_piece.year_finished, art_piece.cost, art_piece.description, art_piece.photo_link, art_piece.sellable, art_piece.viewable))
-
-    return art_piece_list
-
-def get_creators():
-    query = select(creator)
-    result = db.session.execute(query)
-
-    creator_list = []
-    for creator in result.scalars():
-        creator_list.append((creator.creator_fname, creator.creator_lname, creator.birth_country, creator.birth_date, creator.death_date))
-    return creator_list
-
-def get_users():
-    query = select(user)
-    result = db.session.execute(query)
-
-    user_list = []
-    for user in result.scalars():
-        user_list.append((user.user_fname, user.user_lname, user.email, user.password, user.role))
-    return user_list
-
-def get_transactions():
-    query = select(transaction)
-    result = db.session.execute(query)
-
-    transaction_list = []
-    for transaction in result.scalars():
-        buyer_id = transaction.buyer_id
-        seller_id = transaction.seller_id
-
-        buyer = get_user_fromid(buyer_id)
-        seller = get_user_fromid(seller_id)
-
-        transaction_list.append((buyer.fname, buyer.lname, seller.fname, seller.lname, transaction.timestamp))
-
-    return transaction_list
-
-def get_creator_fromid(creator_id):
-    query = select(creator).where(creator.creator_id==creator_id)
-    result = db.session.execute(query)
-    creator = result.scalar()
-    if creator is None:
-        raise('Creator not found')
-    return creator
-
-def get_user_fromid(user_id):
-    query = select(user).where(user.user_id==user_id)
-    result = db.session.execute(query)
-    user = result.scalar()
-    if user is None:
-        raise('User not found')
-    return user
+#not sure if this actually initalizes the database
+def init_db():
+    with app.app_context():
+        db.create_all()
