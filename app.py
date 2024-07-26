@@ -142,15 +142,19 @@ init_db()
 @app.route("/", methods=['GET','POST'])
 def index():
     if request.method == 'POST':
+        #get the email and password from the form
         email = request.form['email']
         password = request.form['password']
 
+        #find the user with the inputted email in the database
         user = users.query.filter_by(email=email).first()
+        #if the user exists and the password is correct, log them in
         if user and user.password == password:
             session["user_email"] = email
             session["user_password"] = password
             return redirect(url_for('paintings'))
         else:
+            #if the user does not exist or the password is incorrect, flash an error message
             flash('Invalid email or password', 'danger')
             return render_template("index.html")
     return render_template("index.html")
