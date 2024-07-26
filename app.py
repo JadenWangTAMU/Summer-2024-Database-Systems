@@ -6,17 +6,27 @@ from sqlalchemy import exc
 from datetime import datetime
 import psycopg2
 
+
+#not sure if this actually initalizes the database
+def init_db():
+    with app.app_context():
+        db.create_all()
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password!@localhost:5432/artfolio_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:M1Pb6czhH8zRSfvB@stably-heuristic-elk.data-1.use1.tembo.io:5432/postgres'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
+
+#psql 'postgresql://postgres:M1Pb6czhH8zRSfvB@stably-heuristic-elk.data-1.use1.tembo.io:5432/postgres'
+
+# old connection string: 'postgresql://postgres:password!@localhost:5432/artfolio_db'
 
 db = SQLAlchemy(app)
 
 class art_piece(db.Model):
     piece_id=db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), default = 1)
     title=db.Column(db.String(100))
     year_finished=db.Column(db.Integer)
     cost=db.Column(db.Float)
@@ -47,6 +57,8 @@ class transaction(db.Model):
     buyer_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     seller_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     timestamp=db.Column(db.DateTime, default=datetime.utcnow)
+
+init_db()
 
 @app.route("/")
 def index():
@@ -83,12 +95,6 @@ def paintings():
     return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
 
 
-#not sure if this actually initalizes the database
-def init_db():
-    with app.app_context():
-        db.create_all()
-
 #this is the main function that runs the app
 if __name__ == '__main__':
-    init_db()
     app.run(debug = True)
