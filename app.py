@@ -205,6 +205,8 @@ def buy_menu():
 
 @app.route('/buy_painting/<int:piece_id>', methods = ['POST'])
 def buy_painting(piece_id):
+    # TODO: need to get the user id from the session so that we can update the owner_id of the painting
+    # can probably get the user id from the session by looking at the users table and finding the user with the email that is in the session
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
         painting.sellable = False
