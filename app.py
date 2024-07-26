@@ -175,16 +175,41 @@ def paintings():
 
 @app.route('/buy_menu', methods = ['GET'])
 def buy_menu():
-    paintings = art_piece.query.filter_by(sellable = True).all()
-    all_creators = creator.query.all()
-    return render_template("buy_menu.html", paintings = paintings, creators = all_creators)
+    #used for page stuff
+    page = request.args.get('page', 1, type=int)
+    query = request.args.get('query', '', type=str)
+    sort_by = request.args.get('sort_by', 'title', type=str)
+    #can change this to whatever, decides how many paintings are shown per page
+    per_page = 5
 
-@app.route('/buy_painting/<int:piece_id>')
+    # does the user want to search for a painting?
+    if query:
+        #filter based on what they searched for
+        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'), art_piece.sellable == True)
+    else:
+        #else just get all the paintings
+        paintings_query = art_piece.query.filter(art_piece.sellable == True)
+    
+    #find out how the user wants to sort the paintings and sort accordingly
+    if sort_by == 'title':
+        paintings_query = paintings_query.order_by(art_piece.title)
+    elif sort_by == 'year':
+        paintings_query = paintings_query.order_by(art_piece.year_finished)
+    
+    #paginate the paintings (basically separates them into pages)
+    paintings = paintings_query.paginate(page=page, per_page=per_page)
+    #get all the creators so we can display the artist of each painting
+    all_creators = creator.query.all()
+    #render the paintings page with all the required info
+    return render_template("buy_menu.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
+
+@app.route('/buy_painting/<int:piece_id>', methods = ['POST'])
 def buy_painting(piece_id):
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
         painting.sellable = False
         db.session.commit()
+        flash(f'Painting "{painting.title}" purchased successfully', 'success')
         return redirect(url_for('buy_menu'))
     else:
         flash('Painting not found or not sellable', 'danger')
