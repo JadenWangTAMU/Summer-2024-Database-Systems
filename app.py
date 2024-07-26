@@ -1,11 +1,8 @@
-from multiprocessing import synchronize
 from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
-from sqlalchemy import exc
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
-import psycopg2
 import os
 
 type_mapping = {
