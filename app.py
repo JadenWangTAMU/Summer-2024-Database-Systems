@@ -3,19 +3,30 @@ from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
 from sqlalchemy import exc
+from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
 import psycopg2
 import os
 
+type_mapping = {
+    Integer: 'integer',
+    String: 'varchar',
+    VARCHAR: 'varchar',
+    Float: 'double_precision',
+    DateTime: 'timestamp'
+}
+
 
 #checks if tables in the database are different from the ones in the models
 def check_db():
+    #get the tables in the database and the models
     insepector = inspect(db.engine)
     existing_tables = insepector.get_table_names()
     model_tables = db.Model.metadata.tables.keys()
+    #checking if the tables in the database are different from the ones in the models
     if set(existing_tables) != set(model_tables):
         return True
-    
+    #checking if the columns in the tables in the database are different from the ones in the models
     for table_name in model_tables:
         existing_columns = insepector.get_columns(table_name)
         model_columns = db.Model.metadata.tables[table_name].columns
@@ -26,35 +37,60 @@ def check_db():
         for column in existing_columns:
             model_column = model_columns.get(column['name'])
             if model_column is None:
+                print('Column', column['name'], 'does not exist in table', table_name)
                 return True
-            if column['type'] != str(model_column.type):
+            
+            existing_column_type = type(column['type']).__name__.lower()
+            model_column_type = type(model_column.type).__name__.lower()
+
+            existing_column_type = type_mapping.get(type(column['type']), existing_column_type)
+            model_column_type = type_mapping.get(type(model_column.type), model_column_type)
+
+            if existing_column_type != model_column_type:
+                print('Type mismatch for column', column['name'], 'in table', table_name)
+                print('Existing column type:', existing_column_type)
+                print('Model column type:', model_column_type)
                 return True
+
+    #if the tables and columns are the same, return False
     return False
 
 #checks if the database is empty
 def is_db_empty():
+    #get all the tables in the database
     for table in db.Model.metadata.tables.values():
+        #select all from the table
         result = db.session.execute(select(table)).fetchone()
+        #if result is not None, the table is not empty
         if result:
             return False
+    #if all tables are empty, return True
     return True
 
 #use the sql script to populate the database
 def populate_db():
+    #get the sql script
     script = os.path.join(os.path.dirname(__file__), 'populate.sql')
+    #execute the sql script
     with open(script, 'r') as f:
         sql = f.read()
     db.session.execute(text(sql))
+    #commit the changes to the database
     db.session.commit()
 
 #initializes the database, if the tables in the database are different from the ones in the models, it drops the tables and creates new ones
 #also populates the database with some data if it is empty
 def init_db():
     with app.app_context():
+        #if the tables in the database are different from the ones in the models, drop the tables and create new ones
         if check_db():
+            print("Database schema does not match the models, dropping current tables")
             db.drop_all()
+            print("Creating new tables in accordance with the models")
             db.create_all()
+        #if the database is empty, populate it with data from the sql script
         if is_db_empty():
+            print("Database is empty, populating with data from sql script")
             populate_db()
 
 app = Flask(__name__)
