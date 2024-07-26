@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
@@ -139,8 +139,20 @@ class transaction(db.Model):
 
 init_db()
 
-@app.route("/")
+@app.route("/", methods=['GET','POST'])
 def index():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = users.query.filter_by(email=email).first()
+        if user and user.password == password:
+            session["user_email"] = email
+            session["user_password"] = password
+            return redirect(url_for('paintings'))
+        else:
+            flash('Invalid email or password', 'danger')
+            return render_template("index.html")
     return render_template("index.html")
 
 @app.route('/paintings', methods = ['GET'])
