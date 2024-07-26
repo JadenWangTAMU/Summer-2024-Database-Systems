@@ -1,16 +1,61 @@
 from multiprocessing import synchronize
 from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import select
+from sqlalchemy import select, inspect, text
 from sqlalchemy import exc
 from datetime import datetime
 import psycopg2
+import os
 
 
-#not sure if this actually initalizes the database
+#checks if tables in the database are different from the ones in the models
+def check_db():
+    insepector = inspect(db.engine)
+    existing_tables = insepector.get_table_names()
+    model_tables = db.Model.metadata.tables.keys()
+    if set(existing_tables) != set(model_tables):
+        return True
+    
+    for table_name in model_tables:
+        existing_columns = insepector.get_columns(table_name)
+        model_columns = db.Model.metadata.tables[table_name].columns
+
+        if len(existing_columns) != len(model_columns):
+            return True
+        
+        for column in existing_columns:
+            model_column = model_columns.get(column['name'])
+            if model_column is None:
+                return True
+            if column['type'] != str(model_column.type):
+                return True
+    return False
+
+#checks if the database is empty
+def is_db_empty():
+    for table in db.Model.metadata.tables.values():
+        result = db.session.execute(select(table)).fetchone()
+        if result:
+            return False
+    return True
+
+#use the sql script to populate the database
+def populate_db():
+    script = os.path.join(os.path.dirname(__file__), 'populate.sql')
+    with open(script, 'r') as f:
+        sql = f.read()
+    db.session.execute(text(sql))
+    db.session.commit()
+
+#initializes the database, if the tables in the database are different from the ones in the models, it drops the tables and creates new ones
+#also populates the database with some data if it is empty
 def init_db():
     with app.app_context():
-        db.create_all()
+        if check_db():
+            db.drop_all()
+            db.create_all()
+        if is_db_empty():
+            populate_db()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:M1Pb6czhH8zRSfvB@stably-heuristic-elk.data-1.use1.tembo.io:5432/postgres'
@@ -26,11 +71,11 @@ db = SQLAlchemy(app)
 class art_piece(db.Model):
     piece_id=db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), default = 1)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), default = 1)
     title=db.Column(db.String(100))
     year_finished=db.Column(db.Integer)
     cost=db.Column(db.Float)
-    description=db.Column(db.String(200))
+    period=db.Column(db.String(200))
     photo_link=db.Column(db.String(1000))
     sellable=db.Column(db.Boolean)
     viewable=db.Column(db.Boolean)
@@ -43,7 +88,7 @@ class creator(db.Model):
     birth_date=db.Column(db.Date)
     death_date=db.Column(db.Date)
 
-class user(db.Model):
+class users(db.Model):
     user_id=db.Column(db.Integer, primary_key=True)
     user_fname=db.Column(db.String(100))
     user_lname=db.Column(db.String(100))
@@ -54,8 +99,8 @@ class user(db.Model):
 class transaction(db.Model):
     transaction_id=db.Column(db.Integer, primary_key=True)
     piece_id = db.Column(db.Integer, db.ForeignKey('art_piece.piece_id'))
-    buyer_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
-    seller_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    buyer_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     timestamp=db.Column(db.DateTime, default=datetime.utcnow)
 
 init_db()
