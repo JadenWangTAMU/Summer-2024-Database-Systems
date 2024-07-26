@@ -150,6 +150,7 @@ def index():
         user = users.query.filter_by(email=email).first()
         #if the user exists and the password is correct, log them in
         if user and user.password == password:
+            flash('You have been logged in', 'success')
             session["user_email"] = email
             session["user_password"] = password
             return redirect(url_for('paintings'))
