@@ -20,3 +20,7 @@ Then, to run the SQL script:
 - I messed up the photo links for each painting. Updated them so that they actually show up when viewing the paintings.
 - The character limit on these photo links was too small, so I increased it to 1000 characters.
 - Other than that, everything should work...
+
+# changes part 2 
+- found a way to have a PostgresSQL server in the cloud
+- now everyone should be able to connect to the same database 
