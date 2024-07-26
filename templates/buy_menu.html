@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sellable Paintings</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/paintings.css')}}">
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/wallpaper2.png') }}");
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">Sellable Paintings</h1>
+        <ul>
+            {% if paintings %}
+                {% for painting in paintings %}
+                    <li class="painting-item">
+                        <h2 class="painting-title">{{ painting.title }}</h2>
+                        <p class="painting-details">Artist:
+                            {% for creator in creators %}
+                                {% if creator.creator_id == painting.creator_id %}
+                                    {{ creator.creator_fname }} {{ creator.creator_lname }}
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                        <p class="painting-details">Year: {{ painting.year_finished }}</p>
+                        <p class="painting-details">Period: {{ painting.period }}</p>
+                        <p class="painting-details">Price: ${{ painting.cost }}</p>
+                        <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 50vh; max-height: 50vh;">
+                        <br>
+                        <a href="{{ url_for('buy_painting', piece_id=painting.piece_id) }}" class="buy-button">Buy</a>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <p>No sellable paintings available.</p>
+            {% endif %}
+        </ul>
+    </div>
+</body>
+</html>

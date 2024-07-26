@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
@@ -172,6 +172,23 @@ def paintings():
     all_creators = creator.query.all()
     #render the paintings page with all the required info
     return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
+
+@app.route('/buy_menu', methods = ['GET'])
+def buy_menu():
+    paintings = art_piece.query.filter_by(sellable = True).all()
+    all_creators = creator.query.all()
+    return render_template("buy_menu.html", paintings = paintings, creators = all_creators)
+
+@app.route('/buy_painting/<int:piece_id>')
+def buy_painting(piece_id):
+    painting = art_piece.query.get(piece_id)
+    if painting and painting.sellable:
+        painting.sellable = False
+        db.session.commit()
+        return redirect(url_for('buy_menu'))
+    else:
+        flash('Painting not found or not sellable', 'danger')
+        return "Painting not available for purchase", 404
 
 
 #this is the main function that runs the app
