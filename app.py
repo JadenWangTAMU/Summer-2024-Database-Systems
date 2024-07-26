@@ -157,8 +157,8 @@ def paintings():
         #filter based on what they searched for
         paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
     else:
-        #else just get all the paintings
-        paintings_query = art_piece.query
+        #else just get all the paintings that are viewable
+        paintings_query = art_piece.query.filter(art_piece.viewable == True)
     
     #find out how the user wants to sort the paintings and sort accordingly
     if sort_by == 'title':
@@ -187,7 +187,7 @@ def buy_menu():
         #filter based on what they searched for
         paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'), art_piece.sellable == True)
     else:
-        #else just get all the paintings
+        #else just get all the paintings that are sellable
         paintings_query = art_piece.query.filter(art_piece.sellable == True)
     
     #find out how the user wants to sort the paintings and sort accordingly
@@ -207,6 +207,9 @@ def buy_menu():
 def buy_painting(piece_id):
     # TODO: need to get the user id from the session so that we can update the owner_id of the painting
     # can probably get the user id from the session by looking at the users table and finding the user with the email that is in the session
+    # TODO: create a transaction in the transactions table every time a painting is bought
+    # TODO: ask the user once they buy a painting if they want to keep it in the gallery. If not then viewable will be set to false and the painting will then have the requirements to be deleted from the database (sellable & viewable = false means the painting should be deleted)
+    #might tweak this later
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
         painting.sellable = False
