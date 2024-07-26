@@ -4,6 +4,7 @@ from sqlalchemy import select, inspect, text
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
 import os
+import psycopg2
 
 type_mapping = {
     Integer: 'integer',
