@@ -3,8 +3,7 @@ INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('The', 
 
 INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Blake', 'Dejohn', 'unknowingly@tamu.edu', 'password', 'A');
 
-INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Jaden', 'Wang', 'jcwtexasanm@tamu.edu
-', 'password', 'A');
+INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Jaden', 'Wang', 'jcwtexasanm@tamu.edu', 'password', 'A');
 
 INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Adam', 'Burhanpurwala', 'adam.burri@tamu.edu', 'password', 'A');
 
