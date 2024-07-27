@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import select, inspect, text
+from sqlalchemy import select, inspect, text, exc
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
 import os
@@ -134,8 +134,25 @@ class transaction(db.Model):
 
 init_db()
 
-@app.route("/")
+@app.route("/", methods=['GET','POST'])
 def index():
+    if request.method == 'POST':
+        #get the email and password from the form
+        email = request.form['email']
+        password = request.form['password']
+
+        #find the user with the inputted email in the database
+        user = users.query.filter_by(email=email).first()
+        #if the user exists and the password is correct, log them in
+        if user and user.password == password:
+            flash('You have been logged in', 'success')
+            session["user_email"] = email
+            session["user_password"] = password
+            return redirect(url_for('paintings'))
+        else:
+            #if the user does not exist or the password is incorrect, flash an error message
+            flash('Invalid email or password', 'danger')
+            return render_template("index.html")
     return render_template("index.html")
 
 @app.route('/paintings', methods = ['GET'])
@@ -215,11 +232,11 @@ def buy_painting(piece_id):
         flash('Painting not found or not sellable', 'danger')
         return "Painting not available for purchase", 404
 
-
 #this is the main function that runs the app
 if __name__ == '__main__':
     app.run(debug = True)
 
+# Read creator function for display
 def getcreator():
     query = select(creator)
     result = db.session.execute(query)
@@ -229,9 +246,136 @@ def getcreator():
         creator_list.append((creators.creator_fname, creators.creator_lname, creators.birth_country, creators.birth_date, creators.death_date))
     return creator_list
 
+# Function to get creator names mapped to IDs
+def get_creator_names():
+    query = select(creator)
+    result = db.session.execute(query)
+    
+    creator_names = {}
+    for creators in result.scalars():
+        full_name = f"{creators.creator_fname} {creators.creator_lname}"
+        creator_names[full_name] = creators.creator_id
+    return creator_names
+
 @app.route("/readcreator")
 def readcreators():
     # Get all the creators using the getcreator function
     creator_list = getcreator()
     # Render the read creators page with all the required info
-    return render_template("R_creator.html", creatorlist=creator_list)
+    return render_template("r_creator.html", creatorlist=creator_list)
+
+# update creator function to allow modification 
+@app.route("/updatecreator")
+def updatecreators(feedback_message=None, feedback_type=False):
+    creator_names = get_creator_names()
+    return render_template("u_creator.html", 
+                           creatornames=creator_names.keys(), 
+                           feedback_message=feedback_message, 
+                           feedback_type=feedback_type)
+
+@app.route("/creatorupdate", methods=['POST'])
+def creatorupdate():
+    creator_name = request.form.get('creatornames')
+    creator_fname = request.form["cfname"]
+    creator_lname = request.form["clname"]
+    birth_country = request.form["country"]
+    birth_date = request.form["bdate"]
+    death_date = request.form["ddate"]
+
+    creator_names = get_creator_names()
+    if creator_name in creator_names:
+        creator_id = creator_names[creator_name]
+    
+    try:
+        obj = db.session.query(creator).filter(
+            creator.creator_id == creator_id).first()
+        
+        if obj is None:
+            msg = 'Creator {} not found.'.format(creator_name)
+            return updatecreators(feedback_message=msg, feedback_type=False)
+
+        if creator_fname != '':
+            obj.creator_fname = creator_fname
+        if creator_lname != '':
+            obj.creator_lname = creator_lname
+        if birth_country != '':
+            obj.birth_country = birth_country
+        if birth_date != '':
+            obj.birth_date = birth_date
+        if death_date != '':
+            obj.death_date = death_date
+
+        db.session.commit()
+    except Exception as err:
+        db.session.rollback()
+        return updatecreators(feedback_message=str(err), feedback_type=False)
+
+    return updatecreators(feedback_message='Successfully updated creator {}'.format(creator_name),
+                          feedback_type=True)
+
+# create creator function 
+@app.route("/createcreator")
+def createcreator(feedback_message=None, feedback_type=False):
+    return render_template("c_creator.html",
+            feedback_message=feedback_message, 
+            feedback_type=feedback_type)
+
+@app.route("/creatorcreate", methods=['POST'])
+def creatorcreate():
+    creator_fname = request.form["cfname"]
+    creator_lname = request.form["clname"]
+    birth_country = request.form["country"]
+    birth_date = request.form["bdate"]
+    death_date = request.form["ddate"]
+
+    try:
+        entry = creator(creator_fname=creator_fname, creator_lname=creator_lname, birth_country=birth_country, birth_date=birth_date, death_date=death_date)
+        db.session.add(entry)
+        db.session.commit()
+    except exc.IntegrityError as err:
+        db.session.rollback()
+        return createcreator(feedback_message='A creator named {} already exists. Create a creator with a different name.'.format(creator_fname), feedback_type=False)
+    except Exception as err:
+        db.session.rollback()
+        return createcreator(feedback_message='Database error: {}'.format(err), feedback_type=False)
+
+    return createcreator(feedback_message='Successfully added creator {}'.format(creator_fname),
+                       feedback_type=True)
+
+# create delete creator function 
+@app.route("/deletecreator")
+def deletecreator(feedback_message=None, feedback_type=False):
+    creator_names = get_creator_names()
+    return render_template("d_creator.html", 
+                           creatornames=creator_names.keys(), 
+                           feedback_message=feedback_message, 
+                           feedback_type=feedback_type)
+
+@app.route("/creatordelete", methods=['POST'])
+def creatordelete():
+    creator_name = request.form.get('creatornames')
+
+    # if not request.form.get('confirmInput'):
+    #     return deletecreator(feedback_message='Operation canceled. Creator not deleted.', feedback_type=False)
+    
+    creator_names = get_creator_names()
+    if creator_name in creator_names:
+        creator_id = creator_names[creator_name]
+    else:
+        return deletecreator(feedback_message='Creator not found.', feedback_type=False)
+
+    try:
+        obj = db.session.query(creator).filter(
+            creator.creator_id == creator_id).first()
+        
+        if obj is None:
+            msg = f'Creator {creator_name} not found.'
+            return deletecreator(feedback_message=msg, feedback_type=False)
+        
+        db.session.delete(obj)
+        db.session.commit()
+    except Exception as err:
+        db.session.rollback()
+        return deletecreator(feedback_message=str(err), feedback_type=False)
+
+    return deletecreator(feedback_message=f'Successfully deleted creator {creator_name}', feedback_type=True)
