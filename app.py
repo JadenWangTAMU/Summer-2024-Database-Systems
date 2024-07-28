@@ -153,7 +153,7 @@ def index():
             flash('You have been logged in', 'success')
             session["user_email"] = email
             session["user_password"] = password
-            return redirect(url_for('paintings'))
+            return redirect(url_for('buy_menu'))
         else:
             #if the user does not exist or the password is incorrect, flash an error message
             flash('Invalid email or password', 'danger')
