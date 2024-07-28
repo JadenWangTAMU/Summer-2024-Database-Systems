@@ -1,18 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paintings</title>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/paintings.css')}}">
-    <style>
-        body {
-            background-image: url("{{ url_for('static', filename='images/wallpaper.png') }}");
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
+{% extends "layouts/base.html" %}
+
+{% block title %} Paintings {% endblock %}
+
+
+{% block body_base %} 
+
+<div class="container">
 
         <h1 class="page-title">Our Current Pieces</h1>
 
@@ -51,7 +44,7 @@
                         {% endfor %}
                     </p>
                     <p class="painting-details">Year: {{ painting.year_finished }}</p>
-                    <p class="painting-details">Description: {{ painting.description }}</p>
+                    <p class="painting-details">Period: {{ painting.period }}</p>
                     <p class="painting-details">Price: ${{ painting.cost }}</p>
                     <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 50vh; max-height: 50vh;">
                 </li>
@@ -74,5 +67,4 @@
         </div>
         <script src="{{url_for('static', filename='js/paintings.js')}}"></script>
     </div>
-</body>
-</html>
+{% endblock %}
