@@ -1,0 +1,43 @@
+{% extends "layouts/form_layout.html" %}
+
+{% block title_form %}
+<h2 style="color: white;">Create Transactions</h2> 
+{% endblock %}
+
+{% block body_form %}
+<form action="{{ url_for('transactioncreate')}}" method="post">
+    <h5>Enter the transaction details</h5>
+    <label for="artpieces">Enter the art piece</label>
+    <div>
+        <select name="artpieces">
+            {% for artpiece in artpieces %}
+                <option value="{{ artpiece }}">{{ artpiece }}</option>
+            {% endfor %} 
+        </select>
+    </div>
+    <label for="buyers">Enter the buyer</label>
+    <div>
+        <select name="buyers">
+            {% for buyer in buyers %}
+                <option value="{{ buyer }}">{{ buyer }}</option>
+            {% endfor %} 
+        </select>
+    </div>
+    <label for="sellers">Enter the seller</label>
+    <div>
+        <select name="sellers">
+            {% for seller in sellers %}
+                <option value="{{ seller }}">{{ seller }}</option>
+            {% endfor %} 
+        </select>
+    </div>
+    <label for="timestamp">Enter the timestamp</label>
+    <div>
+        <input type="date" name="timestamp" placeholder="Date of Purchase">
+    </div>
+    <div>
+        <button type="submit">Create</button>
+    </div>
+</form>
+
+{% endblock %}
