@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
+import pytz
 import os
 import psycopg2
 
@@ -135,7 +136,7 @@ class transaction(db.Model):
     piece_id = db.Column(db.Integer, db.ForeignKey('art_piece.piece_id'))
     buyer_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     seller_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
-    timestamp=db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp=db.Column(db.DateTime, default=lambda: datetime.now(pytz.timezone('US/Central')))
 
 init_db()
 

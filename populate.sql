@@ -9,6 +9,8 @@ INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Adam',
 
 INSERT INTO users (user_fname, user_lname, email, password, role) VALUES('Kyle', 'Easton', 'kyleeaston@tamu.edu', 'password', 'A');
 
+INSERT INTO users(user_fname, user_lname, email, password, role) VALUES('test', 'user', 'testuser@gmail.com', 'password', 'P');
+
 
 -- insert 10 creators
 INSERT INTO creator(creator_fname, creator_lname, birth_country, birth_date, death_date) VALUES('Johannes', 'Vermeer', 'Netherlands', '1632-10-31', '1675-12-15');
