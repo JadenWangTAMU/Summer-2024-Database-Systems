@@ -225,11 +225,26 @@ def buy_painting(piece_id):
     # TODO: need to get the user id from the session so that we can update the owner_id of the painting
     # can probably get the user id from the session by looking at the users table and finding the user with the email that is in the session
     # TODO: create a transaction in the transactions table every time a painting is bought
+
     # TODO: ask the user once they buy a painting if they want to keep it in the gallery. If not then viewable will be set to false and the painting will then have the requirements to be deleted from the database (sellable & viewable = false means the painting should be deleted)
     #might tweak this later
+    buyer_email = session.get("user_email")
+    if not buyer_email:
+        flash('You must be logged in to buy a painting', 'danger')
+        return redirect(url_for('index'))
+    
+    buyer = users.query.filter_by(email=buyer_email).first()
+    if not buyer:
+        flash('User not found', 'danger')
+        return redirect(url_for('index'))
+    
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
         painting.sellable = False
+        painting.owner_id = buyer.user_id
+
+        trans = transaction(piece_id=piece_id, buyer_id=buyer.user_id, seller_id=painting.owner_id)
+        db.session.add(trans)
         db.session.commit()
         flash(f'Painting "{painting.title}" purchased successfully', 'success')
         return redirect(url_for('buy_menu'))
