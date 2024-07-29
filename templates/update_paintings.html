@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update All Art Pieces</title>
+</head>
+<body>
+    <h1>Update All Art Pieces</h1>
+    <form method="POST">
+        {% for painting in paintings %}
+            <h2>Painting ID: {{ painting.piece_id }}</h2>
+            <label for="title_{{ painting.piece_id }}">Title:</label>
+            <input type="text" id="title_{{ painting.piece_id }}" name="title_{{ painting.piece_id }}" value="{{ painting.title }}"><br>
+
+            <label for="description_{{ painting.piece_id}}">Description:</label>
+            <textarea id="description_{{ painting.piece_id }}" name="description_{{ painting.piece_id }}">{{ painting.period }}</textarea><br>
+
+            <label for="price_{{ painting.piece_id }}">Price:</label>
+            <input type="number" id="price_{{ painting.piece_id }}" name="price_{{ painting.piece_id }}" value="{{ painting.cost }}"><br>
+
+            <label for="sellable_{{ painting.piece_id}}">Sellable:</label>
+            <input type="checkbox" id="sellable_{{ painting.piece_id }}" name="sellable_{{ painting.piece_id }}" {% if painting.sellable %}checked{% endif %}><br>
+
+            <label for="viewable_{{ painting.piece_id }}">Viewable:</label>
+            <input type="checkbox" id="viewable_{{ painting.piece_id }}" name="viewable_{{ painting.piece_id }}" {% if painting.viewable %}checked{% endif %}><br>
+        {% endfor %}
+        <button type="submit">Update All</button>
+    </form>
+</body>
+</html>

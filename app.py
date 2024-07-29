@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, ses
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import pytz
 import os
@@ -246,7 +247,7 @@ def buy_painting(piece_id):
 
         #create a transaction for the purchase
         trans = transaction(piece_id=piece_id, buyer_id=buyer.user_id, seller_id=painting.owner_id)
-        
+
         #change the owner of the painting to the buyer
         painting.owner_id = buyer.user_id
         db.session.add(trans)
@@ -257,7 +258,54 @@ def buy_painting(piece_id):
         flash('Painting not found or not sellable', 'danger')
         return "Painting not available for purchase", 404
 
+@app.route('/delete_paintings', methods = ['GET', 'POST'])
+def delete_paintings():
+    if request.method == 'POST':
+        painting_id = request.form['painting_id']
+        try:
+            painting = art_piece.query.get(painting_id)
+            if painting:
+                db.session.delete(painting)
+                db.session.commit()
+                flash(f'Painting "{painting.title}" deleted successfully', 'success')
+            else:
+                flash('Painting not found', 'danger')
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(f'Error deleting painting: This painting is referenced in another table and therefore can not be deleted as to keep foreign key integrity.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting painting: {e}', 'danger')
 
+        return redirect(url_for('delete_paintings'))
+    paintings = art_piece.query.all()
+    return render_template("delete_paintings.html", paintings = paintings)
+@app.route('/update_paintings', methods=['GET', 'POST'])
+def update_paintings():
+    if request.method == 'POST':
+        paintings = art_piece.query.all()
+        for painting in paintings:
+            title = request.form.get(f'title_{painting.piece_id}')
+            period = request.form.get(f'description_{painting.period}')
+            price = request.form.get(f'price_{painting.piece_id}')
+            sellable = request.form.get(f'sellable_{painting.piece_id}') == 'true'
+            viewable = request.form.get(f'viewable_{painting.piece_id}') == 'true'
+
+            if title:
+                painting.title = title
+            if period:
+                painting.description = period
+            if price:
+                painting.cost = price
+            painting.sellable = sellable
+            painting.viewable = viewable
+
+        db.session.commit()
+        flash('All paintings updated successfully', 'success')
+        return redirect(url_for('update_paintings'))
+
+    paintings = art_piece.query.all()
+    return render_template('update_paintings.html', paintings=paintings)
 #this is the main function that runs the app
 if __name__ == '__main__':
     app.run(debug = True)

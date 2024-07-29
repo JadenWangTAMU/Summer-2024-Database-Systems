@@ -62,7 +62,7 @@
                     <p class="painting-details">Period: {{ painting.period }}</p>
                     <p class="painting-details">Price: ${{ painting.cost }}</p>
                     <img src="{{ painting.photo_link }}" alt="{{ painting.title }}" style="max-width: 50vh; max-height: 50vh;">
-                    <form action="{{ url_for('buy_painting', piece_id =painting.piece_id) }}" method="post">
+                    <form action="{{ url_for('buy_painting', piece_id=painting.piece_id) }}" method="post">
                         <button type="submit" class="buy-button">Buy</button>
                     </form>
                 </li>
