@@ -389,17 +389,27 @@ def creatordelete():
 
 @app.route("/usercreate", methods=['get'])
 def usercreate():
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
+    try:
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+    return render_template('c_user.html', admin=session['admin'], feedback_message=msg, feedback_type=successs)
+
+@app.route("/usercreate_temp")
+def usercreate_temp():
     fname = request.args.get('ufname')
     lname = request.args.get('ulname')
     email = request.args.get('email')
     pwd = request.args.get('password')
     role = request.args.get('role')
-    msg = ''
 
     if fname and lname and pwd and role and email:
         existing_user = Users.query.filter_by(email=email).first()
         if existing_user:
-            msg = 'Create failed: Email already exists.'
+            session['msg'] = 'Create failed: Email already exists.'
         else:
             new_user = Users(
                 user_fname=fname,
@@ -411,13 +421,13 @@ def usercreate():
             try:
                 db.session.add(new_user)
                 db.session.commit()
-                msg = 'user create success'
+                session['msg'] = 'user create success'
+                session['feedback_type'] = True
             except:
-                msg = 'Create Failed'
+                session['msg'] = 'Create Failed'
     else:
-        msg = 'Create failed: missing input'
-
-    return render_template('c_user.html', admin=session['admin'], msg=msg)
+        session['msg'] = 'Create failed: missing input'
+    return redirect('/usercreate')
 
 @app.route("/userread")
 def userread():
@@ -443,8 +453,15 @@ def userupdate():
     for users in result.scalars():
         userlist.append((users.user_fname, users.user_lname, users.email, users.password, users.role))  
 
-    msg = get_flashed_messages()
-    return render_template('u_user.html', msg=msg, userlist=userlist, admin=session['admin'])
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
+    try:
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+    
+    return render_template('u_user.html', userlist=userlist, admin=session['admin'], feedback_message=msg, feedback_type=successs)
 
 @app.route("/userupdate_temp", methods=['get'])
 def userupdate_temp():
@@ -458,21 +475,23 @@ def userupdate_temp():
     print(account, fname, lname, email, pwd, role)
     if account and (fname or lname or email or pwd or role):
         try:
-            # Find the user by username (assuming `username` is a unique identifier)
             user_to_update = Users.query.filter_by(email=account).first()
             if user_to_update:
-                msg = 'User update success'
+                session['msg'] = 'User update success'
+                session['feedback_type'] = True
                 # Update user attributes if new values are provided
+                if email:
+                    existing_user = Users.query.filter_by(email=email).first()
+                    if existing_user:
+                        session['msg'] = 'Update failed: Email already exists.'
+                        session['feedback_type'] = False
+                        return redirect('userupdate')
+                    else:
+                        user_to_update.email = email
                 if fname:
                     user_to_update.user_fname = fname
                 if lname:
                     user_to_update.user_lname = lname
-                if email:
-                    existing_user = Users.query.filter_by(email=email).first()
-                    if existing_user:
-                        msg = 'Update failed: Email already exists.'
-                    else:
-                        user_to_update.email = email
                 if pwd:
                     user_to_update.password = pwd
                 if role:
@@ -481,14 +500,12 @@ def userupdate_temp():
                 # Commit the changes to the database
                 db.session.commit()
             else:
-                msg = 'User update failed: No user with this username found.'
+                session['msg'] = 'User update failed: No user with this username found.'
         except Exception as e:
-            msg = f'User update failed: An error occurred. {str(e)}'
+            session['msg'] = f'User update failed: An error occurred. {str(e)}'
     else:
-        msg = 'User update failed: Missing required fields or account identifier.'
+        session['msg'] = 'User update failed: Missing required fields or account identifier.'
 
-    get_flashed_messages()
-    flash(msg)
     return redirect("/userupdate")
 
 @app.route("/userdelete", methods=['get'])
@@ -500,11 +517,17 @@ def userdelete():
         result = db.session.execute(select(Users).where(Users.user_id == session['user_id']))
 
     for users in result.scalars():
-        userlist.append(users.email)  
+        userlist.append(users.email) 
 
-    msg = get_flashed_messages()
- 
-    return render_template('d_user.html', userlist=userlist, msg=msg, admin=session['admin'])
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
+    try:
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+
+    return render_template('d_user.html', userlist=userlist, msg=msg, admin=session['admin'], feedback_message=msg, feedback_type=successs)
 
 @app.route("/userdelete_temp", methods=['get'])
 def userdelete_temp():
@@ -516,8 +539,10 @@ def userdelete_temp():
             user_to_delete = Users.query.filter_by(email=email).first()
             db.session.delete(user_to_delete)
             db.session.commit()
-            flash('User delete success')
+            session['msg'] = 'User delete success'
+            session['feedback_type'] = True
 
-        except Exception:
-            flash('User delete fail')
+        except Exception as e:
+            session['msg'] = f'User delete fail. {str(e)}'
+            session['feedback_type'] = False
     return redirect("/userdelete")
