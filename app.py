@@ -150,12 +150,17 @@ def index():
             session["user_password"] = password
             session["user_id"] = Users.query.filter(Users.email == email).first().user_id
             session["admin"] = Users.query.filter(Users.email == email).first().role == 'A'
-            return redirect(url_for('paintings'))
+            return redirect(url_for('home'))
         else:
             #if the user does not exist or the password is incorrect, flash an error message
             flash('Invalid email or password', 'danger')
             return render_template("index.html")
     return render_template("index.html")
+
+# function to direct user to home after login
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 @app.route('/paintings', methods = ['GET'])
 def paintings():
@@ -463,7 +468,7 @@ def userupdate_temp():
                 if lname:
                     user_to_update.user_lname = lname
                 if email:
-                    existing_user = Users.query.filter_by(email=account).first()
+                    existing_user = Users.query.filter_by(email=email).first()
                     if existing_user:
                         msg = 'Update failed: Email already exists.'
                     else:
