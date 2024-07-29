@@ -136,7 +136,7 @@ class transaction(db.Model):
     piece_id = db.Column(db.Integer, db.ForeignKey('art_piece.piece_id'))
     buyer_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     seller_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
-    timestamp=db.Column(db.DateTime, default=lambda: datetime.now(pytz.timezone('US/Central')))
+    timestamp=db.Column(db.DateTime, default= lambda: datetime.now(pytz.timezone('US/Central')))
 
 init_db()
 
