@@ -224,10 +224,6 @@ def buy_menu():
 
 @app.route('/buy_painting/<int:piece_id>', methods = ['POST'])
 def buy_painting(piece_id):
-    # TODO: need to get the user id from the session so that we can update the owner_id of the painting
-    # can probably get the user id from the session by looking at the users table and finding the user with the email that is in the session
-    # TODO: create a transaction in the transactions table every time a painting is bought
-
     # TODO: ask the user once they buy a painting if they want to keep it in the gallery. If not then viewable will be set to false and the painting will then have the requirements to be deleted from the database (sellable & viewable = false means the painting should be deleted)
     #might tweak this later
     buyer_email = session.get("user_email")
@@ -261,8 +257,10 @@ def buy_painting(piece_id):
 @app.route('/delete_paintings', methods = ['GET', 'POST'])
 def delete_paintings():
     if request.method == 'POST':
+        #get the id of the painting to delete
         painting_id = request.form['painting_id']
         try:
+            #try and delete the painting
             painting = art_piece.query.get(painting_id)
             if painting:
                 db.session.delete(painting)
@@ -271,15 +269,22 @@ def delete_paintings():
             else:
                 flash('Painting not found', 'danger')
         except IntegrityError as e:
+            #if the painting is referenced in another table, it can't be deleted (foreign key constraint)
             db.session.rollback()
             flash(f'Error deleting painting: This painting is referenced in another table and therefore can not be deleted as to keep foreign key integrity.', 'danger')
         except Exception as e:
+            #handle any other unexpected errors
             db.session.rollback()
             flash(f'Error deleting painting: {e}', 'danger')
-
+        #go back to the delete paintings page
         return redirect(url_for('delete_paintings'))
+    #get all the paintings
     paintings = art_piece.query.all()
+    #render the delete paintings page with all the paintings
     return render_template("delete_paintings.html", paintings = paintings)
+
+
+# TODO: rework this, this is bad
 @app.route('/update_paintings', methods=['GET', 'POST'])
 def update_paintings():
     if request.method == 'POST':
