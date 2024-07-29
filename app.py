@@ -241,10 +241,14 @@ def buy_painting(piece_id):
     
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
+        #painting is no longer sellable after being bought
         painting.sellable = False
-        painting.owner_id = buyer.user_id
 
+        #create a transaction for the purchase
         trans = transaction(piece_id=piece_id, buyer_id=buyer.user_id, seller_id=painting.owner_id)
+        
+        #change the owner of the painting to the buyer
+        painting.owner_id = buyer.user_id
         db.session.add(trans)
         db.session.commit()
         flash(f'Painting "{painting.title}" purchased successfully', 'success')
