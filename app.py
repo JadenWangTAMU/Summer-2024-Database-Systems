@@ -340,19 +340,6 @@ def getcreator():
         creator_list.append((creators.creator_fname, creators.creator_lname, creators.birth_country, creators.birth_date, creators.death_date))
     return creator_list
 
-# Read transaction function for display
-def gettransaction():
-    query = select(transaction)
-    result = db.session.execute(query)
-
-    transaction_list = []
-    for transactions in result.scalars():
-        chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
-        buyer=db.session.query(users).filter(users.user_id== transactions.buyer_id).first()
-        seller=db.session.query(users).filter(users.user_id== transactions.seller_id).first()
-        transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
-    return transaction_list
-
 # Function to get creator names mapped to IDs
 def get_creator_names():
     query = select(creator)
@@ -414,7 +401,19 @@ def readcreators():
 @app.route("/readtransaction")
 def readtransactions():
     # Get all the transactions using the getcreator function
-    transaction_list = gettransaction()
+    query = select(transaction)
+    result = db.session.execute(query)
+
+    transaction_list = []
+    for transactions in result.scalars():
+        chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
+        buyer=db.session.query(users).filter(users.user_id== transactions.buyer_id).first()
+        seller=db.session.query(users).filter(users.user_id== transactions.seller_id).first()
+        if(session['admin']):
+            transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
+        elif((buyer.user_id==session['user_id'] or seller.user_id==session['user_id'])):
+            transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
+
     # Render the read transactions page with all the required info
     return render_template("r_transaction.html", transactionlist=transaction_list)
 
