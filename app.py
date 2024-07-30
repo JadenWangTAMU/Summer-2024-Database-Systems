@@ -119,7 +119,7 @@ class creator(db.Model):
     birth_date=db.Column(db.Date)
     death_date=db.Column(db.Date)
 
-class Users(db.Model):
+class users(db.Model):
     user_id=db.Column(db.Integer, primary_key=True)
     user_fname=db.Column(db.String(100))
     user_lname=db.Column(db.String(100))
@@ -145,14 +145,14 @@ def index():
         password = request.form['password']
 
         #find the user with the inputted email in the database
-        user = Users.query.filter_by(email=email).first()
+        user = users.query.filter_by(email=email).first()
         #if the user exists and the password is correct, log them in
         if user and user.password == password:
             # flash('You have been logged in', 'success')
             session["user_email"] = email
             session["user_password"] = password
-            session["user_id"] = Users.query.filter(Users.email == email).first().user_id
-            session["admin"] = Users.query.filter(Users.email == email).first().role == 'A'
+            session["user_id"] = users.query.filter(users.email == email).first().user_id
+            session["admin"] = users.query.filter(users.email == email).first().role == 'A'
             return redirect(url_for('home'))
         else:
             #if the user does not exist or the password is incorrect, flash an error message
@@ -234,7 +234,7 @@ def buy_painting(piece_id):
         flash('You must be logged in to buy a painting', 'danger')
         return redirect(url_for('index'))
     
-    buyer = Users.query.filter_by(email=buyer_email).first()
+    buyer = users.query.filter_by(email=buyer_email).first()
     if not buyer:
         flash('User not found', 'danger')
         return redirect(url_for('index'))
@@ -364,14 +364,14 @@ def gettransaction():
     transaction_list = []
     for transactions in result.scalars():
         chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
-        buyer=db.session.query(Users).filter(Users.user_id== transactions.buyer_id).first()
-        seller=db.session.query(Users).filter(Users.user_id== transactions.seller_id).first()
+        buyer=db.session.query(users).filter(users.user_id== transactions.buyer_id).first()
+        seller=db.session.query(users).filter(users.user_id== transactions.seller_id).first()
         transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
     return transaction_list
 
 # Function to get user names mapped to IDs
 def get_user_names():
-    query = select(Users)
+    query = select(users)
     result = db.session.execute(query)
     
     user_names = {}
@@ -388,8 +388,8 @@ def get_transaction_info():
     transaction_info = {}
     for transactions in result.scalars():
         chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
-        buyer=db.session.query(Users).filter(Users.user_id== transactions.buyer_id).first()
-        seller=db.session.query(Users).filter(Users.user_id== transactions.seller_id).first()
+        buyer=db.session.query(users).filter(users.user_id== transactions.buyer_id).first()
+        seller=db.session.query(users).filter(users.user_id== transactions.seller_id).first()
         full_info = f"{chosen_art_piece.title} {buyer.user_fname} {buyer.user_lname} {seller.user_fname} {seller.user_lname} {transactions.timestamp}"
         transaction_info[full_info] = transactions.transaction_id
     return transaction_info
@@ -495,10 +495,10 @@ def transactionupdate():
             chosen_art_piece=db.session.query(art_piece).filter(art_piece.title== title).first()
             obj.piece_id = chosen_art_piece.piece_id
         if buyer_fname != '' and buyer_lname != '':
-            buyer=db.session.query(Users).filter(Users.user_fname== buyer_fname, Users.user_lname== buyer_lname).first()
+            buyer=db.session.query(users).filter(users.user_fname== buyer_fname, users.user_lname== buyer_lname).first()
             obj.buyer_id = buyer.user_id
         if seller_fname != '' and seller_lname != '':
-            seller=db.session.query(Users).filter(Users.user_fname== seller_fname, Users.user_lname== seller_lname).first()
+            seller=db.session.query(users).filter(users.user_fname== seller_fname, users.user_lname== seller_lname).first()
             obj.seller_id = seller.user_id
         if timestamp != '':
             obj.timestamp = timestamp
@@ -573,9 +573,9 @@ def transactioncreate():
 
     try:
         chosen_art_piece=db.session.query(art_piece).filter(art_piece.title == title).first()
-        buyer=db.session.query(Users).filter(Users.user_fname==buyer_fname and Users.user_lname==buyer_lname).first()
+        buyer=db.session.query(users).filter(users.user_fname==buyer_fname and users.user_lname==buyer_lname).first()
         print(chosen_art_piece.owner_id)
-        seller=db.session.query(Users).filter(Users.user_fname==seller_fname and Users.user_lname==seller_lname).first()
+        seller=db.session.query(users).filter(users.user_fname==seller_fname and users.user_lname==seller_lname).first()
         if(seller.user_id==chosen_art_piece.owner_id):
             entry = transaction(piece_id=chosen_art_piece.piece_id, buyer_id=buyer.user_id, seller_id=seller.user_id, timestamp=timestamp)
             db.session.add(entry)
@@ -690,11 +690,11 @@ def usercreate_temp():
     role = request.args.get('role')
 
     if fname and lname and pwd and role and email:
-        existing_user = Users.query.filter_by(email=email).first()
+        existing_user = users.query.filter_by(email=email).first()
         if existing_user:
             session['msg'] = 'Create failed: Email already exists.'
         else:
-            new_user = Users(
+            new_user = users(
                 user_fname=fname,
                 user_lname=lname,
                 email=email,
@@ -716,12 +716,12 @@ def usercreate_temp():
 def userread():
     userlist = []
     if session['admin']:
-        result = db.session.execute(select(Users))
+        result = db.session.execute(select(users))
     else:
-        result = db.session.execute(select(Users).where(Users.user_id == session['user_id']))
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
 
-    for users in result.scalars():
-        userlist.append((users.user_fname, users.user_lname, users.email, users.password, users.role))    
+    for user in result.scalars():
+        userlist.append((user.user_fname, user.user_lname, user.email, user.password, user.role))    
 
     return render_template('r_user.html', userlist=userlist, admin=session['admin'])
 
@@ -729,12 +729,12 @@ def userread():
 def userupdate():
     userlist = []
     if session['admin']:
-        result = db.session.execute(select(Users))
+        result = db.session.execute(select(users))
     else:
-        result = db.session.execute(select(Users).where(Users.user_id == session['user_id']))
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
 
-    for users in result.scalars():
-        userlist.append((users.user_fname, users.user_lname, users.email, users.password, users.role))  
+    for user in result.scalars():
+        userlist.append((user.user_fname, user.user_lname, user.email, user.password, user.role))  
 
     msg = session.get('msg', None)
     successs = session.get('feedback_type', False)
@@ -758,13 +758,13 @@ def userupdate_temp():
     print(account, fname, lname, email, pwd, role)
     if account and (fname or lname or email or pwd or role):
         try:
-            user_to_update = Users.query.filter_by(email=account).first()
+            user_to_update = users.query.filter_by(email=account).first()
             if user_to_update:
                 session['msg'] = 'User update success'
                 session['feedback_type'] = True
                 # Update user attributes if new values are provided
                 if email:
-                    existing_user = Users.query.filter_by(email=email).first()
+                    existing_user = users.query.filter_by(email=email).first()
                     if existing_user:
                         session['msg'] = 'Update failed: Email already exists.'
                         session['feedback_type'] = False
@@ -795,12 +795,12 @@ def userupdate_temp():
 def userdelete():
     userlist = []
     if session['admin']:
-        result = db.session.execute(select(Users))
+        result = db.session.execute(select(users))
     else:
-        result = db.session.execute(select(Users).where(Users.user_id == session['user_id']))
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
 
-    for users in result.scalars():
-        userlist.append(users.email) 
+    for user in result.scalars():
+        userlist.append(user.email) 
 
     msg = session.get('msg', None)
     successs = session.get('feedback_type', False)
@@ -819,7 +819,7 @@ def userdelete_temp():
 
     if email or not email:
         try:
-            user_to_delete = Users.query.filter_by(email=email).first()
+            user_to_delete = users.query.filter_by(email=email).first()
             db.session.delete(user_to_delete)
             db.session.commit()
             session['msg'] = 'User delete success'
