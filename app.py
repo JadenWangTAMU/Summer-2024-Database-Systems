@@ -383,8 +383,12 @@ def get_transaction_info():
         chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
         buyer=db.session.query(users).filter(users.user_id== transactions.buyer_id).first()
         seller=db.session.query(users).filter(users.user_id== transactions.seller_id).first()
-        full_info = f"{chosen_art_piece.title} {buyer.user_fname} {buyer.user_lname} {seller.user_fname} {seller.user_lname} {transactions.timestamp}"
-        transaction_info[full_info] = transactions.transaction_id
+        if(session['admin']):
+            full_info = f"{chosen_art_piece.title} {buyer.user_fname} {buyer.user_lname} {seller.user_fname} {seller.user_lname} {transactions.timestamp}"
+            transaction_info[full_info] = transactions.transaction_id
+        elif((buyer.user_id==session['user_id'] or seller.user_id==session['user_id'])):
+            full_info = f"{chosen_art_piece.title} {buyer.user_fname} {buyer.user_lname} {seller.user_fname} {seller.user_lname} {transactions.timestamp}"
+            transaction_info[full_info] = transactions.transaction_id
     return transaction_info
 
 @app.route("/readcreator")
