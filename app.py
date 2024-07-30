@@ -117,7 +117,7 @@ class creator(db.Model):
     creator_lname=db.Column(db.String(100))
     birth_country=db.Column(db.String(100))
     birth_date=db.Column(db.Date)
-    death_date=db.Column(db.Date)
+    death_date=db.Column(db.Date,)
 
 class users(db.Model):
     user_id=db.Column(db.Integer, primary_key=True)
@@ -327,6 +327,14 @@ def creatorcreate():
     birth_country = request.form["country"]
     birth_date = request.form["bdate"]
     death_date = request.form["ddate"]
+    nobdate = request.form["nobdate"]
+    ifalive = request.form["ifalive"]
+
+    if nobdate == 'on':
+        birth_date = None
+
+    if ifalive == 'on':
+        death_date = None
 
     # Check if a creator with the same first name and last name already exists
     existing_creator = db.session.query(creator).filter_by(
