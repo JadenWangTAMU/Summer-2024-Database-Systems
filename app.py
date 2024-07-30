@@ -265,6 +265,17 @@ def buy_painting(piece_id):
 
 @app.route('/delete_paintings', methods = ['GET', 'POST'])
 def delete_paintings():
+    user_email = session.get("user_email")
+    if not user_email:
+        flash('You must be logged in to delete a painting', 'danger')
+        return redirect(url_for('index'))
+    
+    user = users.query.filter_by(email=user_email).first()
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('index'))
+    user_role = user.role
+
     if request.method == 'POST':
         #get the id of the painting to delete
         painting_id = request.form['painting_id']
@@ -287,8 +298,11 @@ def delete_paintings():
             flash(f'Error deleting painting: {e}', 'danger')
         #go back to the delete paintings page
         return redirect(url_for('delete_paintings'))
-    #get all the paintings
-    paintings = art_piece.query.all()
+    #based on the user role, either show all paintings or only the ones they own
+    if user_role == 'A':
+        paintings = art_piece.query.all()
+    else:
+        paintings = art_piece.query.filter_by(owner_id=user.user_id).all()
     #render the delete paintings page with all the paintings
     return render_template("delete_paintings.html", paintings = paintings)
 
