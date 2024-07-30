@@ -43,6 +43,7 @@
                         <option value="{{ creator.creator_id }}">{{ creator.creator_fname }} {{ creator.creator_lname }}</option>
                     {% endfor %}
                 </select>
+                <a id="create-creator-link" href="{{ url_for('createcreator') }}">Don't see your creator? Create a new one here.</a>
             </div>
             <div class="form-group">
                 <label for="period">Period:</label>
@@ -71,5 +72,6 @@
             <button type="submit">Create Painting</button>
         </form>
     </div>
+    <script src="{{url_for('static', filename='js/paintings.js')}}"></script>
 </body>
 </html>
