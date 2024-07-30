@@ -138,6 +138,7 @@ init_db()
 
 @app.route("/", methods=['GET','POST'])
 def index():
+    session['admin'] = False
     if request.method == 'POST':
         #get the email and password from the form
         email = request.form['email']
@@ -367,7 +368,6 @@ def gettransaction():
         seller=db.session.query(Users).filter(Users.user_id== transactions.seller_id).first()
         transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
     return transaction_list
-
 
 # Function to get user names mapped to IDs
 def get_user_names():
@@ -612,7 +612,6 @@ def deletetransaction(feedback_message=None, feedback_type=False):
                            feedback_message=feedback_message, 
                            feedback_type=feedback_type)
 
-
 @app.route("/creatordelete", methods=['POST'])
 def creatordelete():
     creator_name = request.form.get('creatornames')
@@ -826,7 +825,7 @@ def userdelete_temp():
             session['msg'] = 'User delete success'
             session['feedback_type'] = True
 
-        except Exception as e:
-            session['msg'] = f'User delete fail. {str(e)}'
+        except IntegrityError as e:
+            session['msg'] = 'User delete fail. Integrity Error'
             session['feedback_type'] = False
     return redirect("/userdelete")
