@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, session
+from flask import Flask, render_template, request, flash, redirect, url_for, session, get_flashed_messages
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text, exc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
 import os
+import traceback
 import psycopg2
 
 type_mapping = {
@@ -150,12 +152,17 @@ def index():
             session["user_password"] = password
             session["user_id"] = users.query.filter(users.email == email).first().user_id
             session["admin"] = users.query.filter(users.email == email).first().role == 'A'
-            return redirect(url_for('paintings'))
+            return render_template("home.html")
         else:
             #if the user does not exist or the password is incorrect, flash an error message
             flash('Invalid email or password', 'danger')
             return render_template("index.html")
     return render_template("index.html")
+
+# function to direct user to home after login
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 @app.route('/paintings', methods = ['GET'])
 def paintings():
@@ -234,6 +241,91 @@ def buy_painting(piece_id):
         flash('Painting not found or not sellable', 'danger')
         return "Painting not available for purchase", 404
 
+@app.route('/delete_paintings', methods = ['GET', 'POST'])
+def delete_paintings():
+    if request.method == 'POST':
+        #get the id of the painting to delete
+        painting_id = request.form['painting_id']
+        try:
+            #try and delete the painting
+            painting = art_piece.query.get(painting_id)
+            if painting:
+                db.session.delete(painting)
+                db.session.commit()
+                flash(f'Painting "{painting.title}" deleted successfully', 'success')
+            else:
+                flash('Painting not found', 'danger')
+        except IntegrityError as e:
+            #if the painting is referenced in another table, it can't be deleted (foreign key constraint)
+            db.session.rollback()
+            flash(f'Error deleting painting: This painting is referenced in another table and therefore can not be deleted as to keep foreign key integrity.', 'danger')
+        except Exception as e:
+            #handle any other unexpected errors
+            db.session.rollback()
+            flash(f'Error deleting painting: {e}', 'danger')
+        #go back to the delete paintings page
+        return redirect(url_for('delete_paintings'))
+    #get all the paintings
+    paintings = art_piece.query.all()
+    #render the delete paintings page with all the paintings
+    return render_template("d_painting.html", paintings = paintings)
+
+@app.route('/create_painting', methods = ['GET', 'POST'])
+def create_painting():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        #default owner of the painting is the museum
+        owner = 1
+        creator_id = request.form.get('creator_id')
+        period = request.form.get('period')
+        year_finished = request.form.get('year_finished')
+        cost = request.form.get('cost')
+        photo_link = request.form.get('photo_link')
+        sellable = request.form.get('sellable') == 'true'
+        viewable = request.form.get('viewable') == 'true'
+
+        if not title or not period or not cost or not photo_link or not year_finished:
+            flash('Please fill out all fields', 'danger')
+            return redirect(url_for('create_painting'))
+    
+        new_painting = art_piece(owner_id=owner, creator_id=creator_id, title=title, year_finished=year_finished, period=period, cost=cost, photo_link=photo_link, sellable=sellable, viewable=viewable)
+
+        try:
+            db.session.add(new_painting)
+            db.session.commit()
+            flash(f'Painting "{title}" created successfully', 'success')
+            return redirect(url_for('create_painting'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating painting: {e}', 'danger')
+            return redirect(url_for('create_painting'))
+    creators = creator.query.all()
+    return render_template("c_painting.html", creators=creators)
+
+@app.route('/update_paintings', methods=['GET', 'POST'])
+def update_paintings():
+    if request.method == 'POST':
+        try:
+            piece_id = request.form['piece_id']
+            painting = art_piece.query.get(piece_id)
+            painting.title = request.form['title']
+            painting.creator_id = request.form['creator_id']
+            painting.period = request.form['period']
+            painting.year_finished = request.form['year_finished']
+            painting.cost = request.form['cost']
+            painting.photo_link = request.form['photo_link']
+            painting.sellable = 'sellable' in request.form
+            painting.viewable = 'viewable' in request.form
+            db.session.commit()
+            flash(f'Painting "{painting.title}" updated successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating painting: {e}', 'danger')
+    
+    paintings = art_piece.query.order_by(art_piece.piece_id).all()
+    creators = creator.query.all()
+    return render_template("u_painting.html", paintings=paintings, creators=creators)
+
 #this is the main function that runs the app
 if __name__ == '__main__':
     app.run(debug = True)
@@ -283,6 +375,17 @@ def get_user_names():
         user_names[full_name] = user.user_id
     return user_names
 
+# Function to get user names mapped to IDs
+def get_art_piece_titles():
+    query = select(art_piece)
+    result = db.session.execute(query)
+    
+    art_piece_titles = {}
+    for chosen_art_piece in result.scalars():
+        full_title = f"{chosen_art_piece.title}"
+        art_piece_titles[full_title] = chosen_art_piece.piece_id
+    return art_piece_titles
+
 # Function to get transaction info mapped to IDs
 def get_transaction_info():
     query = select(transaction)
@@ -299,10 +402,14 @@ def get_transaction_info():
 
 @app.route("/readcreator")
 def readcreators():
-    # Get all the creators using the getcreator function
-    creator_list = getcreator()
-    # Render the read creators page with all the required info
-    return render_template("r_creator.html", creatorlist=creator_list)
+    try:
+        creator_list = getcreator()
+        return render_template("r_creator.html", creatorlist=creator_list)
+    except Exception as e:
+        print("Error in readcreators function:")
+        print(e)
+        traceback.print_exc()
+        return "An error occurred while fetching the creators.", 500
 
 @app.route("/readtransaction")
 def readtransactions():
@@ -324,8 +431,13 @@ def updatecreators(feedback_message=None, feedback_type=False):
 @app.route("/updatetransaction")
 def updatetransactions(feedback_message=None, feedback_type=False):
     transaction_infos = get_transaction_info()
+    art_pieces=get_art_piece_titles()
+    users=get_user_names()
     return render_template("u_transaction.html", 
-                           transactioninfos=transaction_infos.keys(), 
+                           transactioninfos=transaction_infos.keys(),
+                           artpieces=art_pieces.keys(),
+                           buyers=users.keys(),
+                           sellers=users.keys(), 
                            feedback_message=feedback_message, 
                            feedback_type=feedback_type)
 
@@ -371,45 +483,92 @@ def creatorupdate():
 
 @app.route("/transactionupdate", methods=['POST'])
 def transactionupdate():
-    # change transaction piece id to new art piece, transaction buyer_id to new buyer (and change art_piece owner to new buyer), transaction seller_id to new seller, timestamp to new timestamp
-    transaction_info = request.form.get('transactioninfos')
-    title = request.form["title"]
-    buyer_fname = request.form["bfname"]
-    buyer_lname = request.form["blname"]
-    seller_fname = request.form["sfname"]
-    seller_lname = request.form["slname"]
-    timestamp = request.form["timestamp"]
+    if(session['admin']):
+        # change transaction piece id to new art piece, transaction buyer_id to new buyer (and change art_piece owner to new buyer), transaction seller_id to new seller, timestamp to new timestamp
+        transaction_info = request.form.get('transactioninfos')
+        title = request.form.get('artpieces')
+        buyer = request.form.get('buyers')
+        seller= request.form.get('sellers')
+        timestamp = request.form["timestamp"]
 
-    transaction_infos = get_transaction_info()
-    if transaction_info in transaction_infos:
-        transaction_id = transaction_infos[transaction_info]
-    
-    try:
-        obj = db.session.query(transaction).filter(
-            transaction.transaction_id == transaction_id).first()
+        transaction_infos = get_transaction_info()
+        if transaction_info in transaction_infos:
+            transaction_id = transaction_infos[transaction_info]
         
-        if obj is None:
-            msg = 'Transaction {} not found.'.format(transaction_info)
-            return updatetransactions(feedback_message=msg, feedback_type=False)
+        try:
+            obj = db.session.query(transaction).filter(
+                transaction.transaction_id == transaction_id).first()
+            
+            if obj is None:
+                msg = 'Transaction {} not found.'.format(transaction_info)
+                return updatetransactions(feedback_message=msg, feedback_type=False)
 
-        if title != '':
-            chosen_art_piece=db.session.query(art_piece).filter(art_piece.title== title).first()
-            obj.piece_id = chosen_art_piece.piece_id
-        if buyer_fname != '' and buyer_lname != '':
-            buyer=db.session.query(users).filter(users.user_fname== buyer_fname, users.user_lname== buyer_lname).first()
-            obj.buyer_id = buyer.user_id
-        if seller_fname != '' and seller_lname != '':
-            seller=db.session.query(users).filter(users.user_fname== seller_fname, users.user_lname== seller_lname).first()
-            obj.seller_id = seller.user_id
-        if timestamp != '':
-            obj.timestamp = timestamp
+            art_piece_titles = get_art_piece_titles()
+            
+            if title in art_piece_titles:
+                art_piece_id = art_piece_titles[title]
+            try:
+                old_art_piece_obj=db.session.query(art_piece).filter(
+                art_piece.piece_id == obj.piece_id).first()
+                new_art_piece_obj=db.session.query(art_piece).filter(
+                art_piece.piece_id == art_piece_id).first()
+                
+                if new_art_piece_obj is None:
+                    msg = 'Art Piece {} not found.'.format(title)
+                    return updatetransactions(feedback_message=msg, feedback_type=False)
+                else:
+                    old_art_piece_obj.owner_id=obj.seller_id
+                    obj.piece_id = art_piece_id
+                    new_art_piece_obj.owner_id=obj.buyer_id
+            
+            except Exception as err:
+                db.session.rollback()
+                return updatetransactions(feedback_message=str(err), feedback_type=False)
 
-        db.session.commit()
-        return updatetransactions(feedback_message='Successfully updated transaction {}'.format(transaction_info),
-                        feedback_type=True)
-    except Exception as err:
-        db.session.rollback()
-        return updatetransactions(feedback_message=str(err), feedback_type=False)
+            user_names = get_user_names()
+            
+            if buyer in user_names:
+                buyer_id = user_names[buyer]
+            try:
+                buyer_obj=db.session.query(users).filter(
+                users.user_id == buyer_id).first()
+                if buyer_obj is None:
+                    msg = 'Buyer {} not found.'.format(buyer)
+                    return updatetransactions(feedback_message=msg, feedback_type=False)
+                else:
+                    chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id == obj.piece_id).first()
+                    chosen_art_piece.owner_id=buyer_id
+                    obj.buyer_id = buyer_id
+            
+            except Exception as err:
+                db.session.rollback()
+                return updatetransactions(feedback_message=str(err), feedback_type=False)
+
+            if seller in user_names:
+                seller_id = user_names[seller]
+            try:
+                seller_obj=db.session.query(users).filter(
+                users.user_id == seller_id).first()
+                if seller_obj is None:
+                    msg = 'Seller {} not found.'.format(seller)
+                    return updatetransactions(feedback_message=msg, feedback_type=False)
+                else:
+                    obj.seller_id = seller_id
+            
+            except Exception as err:
+                db.session.rollback()
+                return updatetransactions(feedback_message=str(err), feedback_type=False)
+            
+            if timestamp != '':
+                obj.timestamp = timestamp
+
+            db.session.commit()
+            return updatetransactions(feedback_message='Successfully updated transaction {}'.format(transaction_info),feedback_type=True)
+        except Exception as err:
+            db.session.rollback()
+            return updatetransactions(feedback_message=str(err), feedback_type=False)
+    else:
+        return updatetransactions(feedback_message='You do not have permission to update transactions',feedback_type=False)
 
 # create creator function 
 @app.route("/createcreator")
@@ -421,9 +580,16 @@ def createcreator(feedback_message=None, feedback_type=False):
 # create transaction function 
 @app.route("/createtransaction")
 def createtransaction(feedback_message=None, feedback_type=False):
-    return render_template("c_transaction.html",
-            feedback_message=feedback_message, 
-            feedback_type=feedback_type)
+    transaction_infos = get_transaction_info()
+    art_pieces=get_art_piece_titles()
+    users=get_user_names()
+    return render_template("c_transaction.html", 
+                           transactioninfos=transaction_infos.keys(),
+                           artpieces=art_pieces.keys(),
+                           buyers=users.keys(),
+                           sellers=users.keys(), 
+                           feedback_message=feedback_message, 
+                           feedback_type=feedback_type)
 
 @app.route("/creatorcreate", methods=['POST'])
 def creatorcreate():
@@ -449,35 +615,65 @@ def creatorcreate():
 
 @app.route("/transactioncreate", methods=['POST'])
 def transactioncreate():
-    title = request.form["title"]
-    buyer_fname = request.form["bfname"]
-    buyer_lname = request.form["blname"]
-    seller_fname = request.form["sfname"]
-    seller_lname = request.form["slname"]
-    timestamp = request.form["timestamp"]
+    if(session['admin']):
+        title = request.form.get('artpieces')
+        buyer = request.form.get('buyers')
+        seller= request.form.get('sellers')
+        timestamp = request.form["timestamp"]
 
-    try:
-        chosen_art_piece=db.session.query(art_piece).filter(art_piece.title == title).first()
-        buyer=db.session.query(users).filter(users.user_fname==buyer_fname and users.user_lname==buyer_lname).first()
-        print(chosen_art_piece.owner_id)
-        seller=db.session.query(users).filter(users.user_fname==seller_fname and users.user_lname==seller_lname).first()
-        if(seller.user_id==chosen_art_piece.owner_id):
-            entry = transaction(piece_id=chosen_art_piece.piece_id, buyer_id=buyer.user_id, seller_id=seller.user_id, timestamp=timestamp)
-            db.session.add(entry)
-            chosen_art_piece.owner_id=buyer.user_id
-            db.session.commit()
-        else:
-            return createtransaction(feedback_message='Incorrect seller {}'.format(title),
-                       feedback_type=False)
-    except exc.IntegrityError as err:
-        db.session.rollback()
-        return createtransaction(feedback_message='A transaction with this info already exists. Create a transaction with different info.'.format(title), feedback_type=False)
-    except Exception as err:
-        db.session.rollback()
-        return createtransaction(feedback_message='Database error: {}'.format(err), feedback_type=False)
+        try:
+            chosen_art_piece=db.session.query(art_piece).filter(art_piece.title == title).first()
+            user_names = get_user_names()
+            
+            if buyer in user_names:
+                buyer_id = user_names[buyer]
+            else:
+                return createtransaction(feedback_message='Buyer not found.', feedback_type=False)
+            
+            try:
+                buyer_obj = db.session.query(users).filter(
+                    users.user_id == buyer_id).first()
+            
+                if buyer_obj is None:
+                    msg = f'Buyer {buyer} not found.'
+                    return createtransaction(feedback_message=msg, feedback_type=False)
+            except Exception as err:
+                db.session.rollback()
+                return createtransaction(feedback_message=str(err), feedback_type=False)
+            
+            if seller in user_names:
+                seller_id = user_names[seller]
+            else:
+                return createtransaction(feedback_message='Buyer not found.', feedback_type=False)
+            
+            try:
+                seller_obj = db.session.query(users).filter(
+                    users.user_id == seller_id).first()
+            
+                if seller_obj is None:
+                    msg = f'Seller {seller} not found.'
+                    return createtransaction(feedback_message=msg, feedback_type=False)
+            except Exception as err:
+                db.session.rollback()
+                return createtransaction(feedback_message=str(err), feedback_type=False)
+            
+            if(seller_obj.user_id==chosen_art_piece.owner_id):
+                entry = transaction(piece_id=chosen_art_piece.piece_id, buyer_id=buyer_obj.user_id, seller_id=seller_obj.user_id, timestamp=timestamp)
+                db.session.add(entry)
+                chosen_art_piece.owner_id=buyer_obj.user_id
+                db.session.commit()
+            else:
+                return createtransaction(feedback_message='Incorrect seller {}'.format(title),
+                        feedback_type=False)
+        except exc.IntegrityError as err:
+            db.session.rollback()
+            return createtransaction(feedback_message='A transaction with this info already exists. Create a transaction with different info.'.format(title), feedback_type=False)
+        except Exception as err:
+            db.session.rollback()
+            return createtransaction(feedback_message='Database error: {}'.format(err), feedback_type=False)
 
-    return createtransaction(feedback_message='Successfully added transaction {}'.format(title),
-                       feedback_type=True)
+        return createtransaction(feedback_message='Successfully added transaction {}'.format(title), feedback_type=True)
+    return createtransaction(feedback_message='You do not have permission to add a transaction', feedback_type=False)
 
 # create delete creator function 
 @app.route("/deletecreator")
@@ -528,27 +724,188 @@ def creatordelete():
 
 @app.route("/transactiondelete", methods=['POST'])
 def transactiondelete():
-    # give ownership of art piece back to seller
-    transaction_info = request.form.get('transactioninfos')
-    
-    transaction_infos = get_transaction_info()
-    if transaction_info in transaction_infos:
-        transaction_id = transaction_infos[transaction_info]
-    else:
-        return deletetransaction(feedback_message='Transaction not found.', feedback_type=False)
+    if(session['admin']):
+        # give ownership of art piece back to seller
+        transaction_info = request.form.get('transactioninfos')
+        
+        transaction_infos = get_transaction_info()
+        if transaction_info in transaction_infos:
+            transaction_id = transaction_infos[transaction_info]
+        else:
+            return deletetransaction(feedback_message='Transaction not found.', feedback_type=False)
 
+        try:
+            obj = db.session.query(transaction).filter(
+                transaction.transaction_id == transaction_id).first()
+            
+            if obj is None:
+                msg = f'Transaction not found.'
+                return deletetransaction(feedback_message=msg, feedback_type=False)
+            chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== obj.piece_id).first()
+            chosen_art_piece.owner_id=obj.seller_id
+            db.session.delete(obj)
+            db.session.commit()
+        except Exception as err:
+            db.session.rollback()
+            return deletetransaction(feedback_message=str(err), feedback_type=False)
+
+        return deletetransaction(feedback_message=f'Successfully deleted transaction', feedback_type=True)
+    return deletetransaction(feedback_message=f'You do not have permissio to delete transaction', feedback_type=False)
+
+@app.route("/usercreate", methods=['get'])
+def usercreate():
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
     try:
-        obj = db.session.query(transaction).filter(
-            transaction.transaction_id == transaction_id).first()
-        
-        if obj is None:
-            msg = f'Transaction not found.'
-            return deletetransaction(feedback_message=msg, feedback_type=False)
-        
-        db.session.delete(obj)
-        db.session.commit()
-    except Exception as err:
-        db.session.rollback()
-        return deletetransaction(feedback_message=str(err), feedback_type=False)
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+    return render_template('c_user.html', admin=session['admin'], feedback_message=msg, feedback_type=successs)
 
-    return deletetransaction(feedback_message=f'Successfully deleted transaction', feedback_type=True)
+@app.route("/usercreate_temp")
+def usercreate_temp():
+    fname = request.args.get('ufname')
+    lname = request.args.get('ulname')
+    email = request.args.get('email')
+    pwd = request.args.get('password')
+    role = request.args.get('role')
+
+    if fname and lname and pwd and role and email:
+        existing_user = users.query.filter_by(email=email).first()
+        if existing_user:
+            session['msg'] = 'Create failed: Email already exists.'
+        else:
+            new_user = users(
+                user_fname=fname,
+                user_lname=lname,
+                email=email,
+                password=pwd,
+                role=role
+            )
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                session['msg'] = 'user create success'
+                session['feedback_type'] = True
+            except:
+                session['msg'] = 'Create Failed'
+    else:
+        session['msg'] = 'Create failed: missing input'
+    return redirect('/usercreate')
+
+@app.route("/userread")
+def userread():
+    userlist = []
+    if session['admin']:
+        result = db.session.execute(select(users))
+    else:
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
+
+    for user in result.scalars():
+        userlist.append((user.user_fname, user.user_lname, user.email, user.password, user.role))    
+
+    return render_template('r_user.html', userlist=userlist, admin=session['admin'])
+
+@app.route("/userupdate", methods=['get'])
+def userupdate():
+    userlist = []
+    if session['admin']:
+        result = db.session.execute(select(users))
+    else:
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
+
+    for user in result.scalars():
+        userlist.append((user.user_fname, user.user_lname, user.email, user.password, user.role))  
+
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
+    try:
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+    
+    return render_template('u_user.html', userlist=userlist, admin=session['admin'], feedback_message=msg, feedback_type=successs)
+
+@app.route("/userupdate_temp", methods=['get'])
+def userupdate_temp():
+    account=request.args.get('usernames')
+    fname=request.args.get('ufname')
+    lname=request.args.get('ulname')
+    email=request.args.get('email')
+    pwd=request.args.get('password')
+    role=request.args.get('role')
+
+    print(account, fname, lname, email, pwd, role)
+    if account and (fname or lname or email or pwd or role):
+        try:
+            user_to_update = users.query.filter_by(email=account).first()
+            if user_to_update:
+                session['msg'] = 'User update success'
+                session['feedback_type'] = True
+                # Update user attributes if new values are provided
+                if email:
+                    existing_user = users.query.filter_by(email=email).first()
+                    if existing_user:
+                        session['msg'] = 'Update failed: Email already exists.'
+                        session['feedback_type'] = False
+                        return redirect('userupdate')
+                    else:
+                        user_to_update.email = email
+                if fname:
+                    user_to_update.user_fname = fname
+                if lname:
+                    user_to_update.user_lname = lname
+                if pwd:
+                    user_to_update.password = pwd
+                if role:
+                    user_to_update.role = role
+
+                # Commit the changes to the database
+                db.session.commit()
+            else:
+                session['msg'] = 'User update failed: No user with this username found.'
+        except Exception as e:
+            session['msg'] = f'User update failed: An error occurred. {str(e)}'
+    else:
+        session['msg'] = 'User update failed: Missing required fields or account identifier.'
+
+    return redirect("/userupdate")
+
+@app.route("/userdelete", methods=['get'])
+def userdelete():
+    userlist = []
+    if session['admin']:
+        result = db.session.execute(select(users))
+    else:
+        result = db.session.execute(select(users).where(users.user_id == session['user_id']))
+    for user in result.scalars():
+        userlist.append(user.email) 
+
+    msg = session.get('msg', None)
+    successs = session.get('feedback_type', False)
+    try:
+        session['feedback_type'] = False
+        session.pop('msg')
+    except:
+        msg = None
+    return render_template('d_user.html', userlist=userlist, msg=msg, admin=session['admin'], feedback_message=msg, feedback_type=successs)
+
+@app.route("/userdelete_temp", methods=['get'])
+def userdelete_temp():
+    get_flashed_messages()
+    email=request.args.get('useremail')
+
+    if email or not email:
+        try:
+            user_to_delete = users.query.filter_by(email=email).first()
+            db.session.delete(user_to_delete)
+            db.session.commit()
+            session['msg'] = 'User delete success'
+            session['feedback_type'] = True
+
+        except Exception as e:
+            session['msg'] = f'User delete fail. {str(e)}'
+            session['feedback_type'] = False
+    return redirect("/userdelete")
