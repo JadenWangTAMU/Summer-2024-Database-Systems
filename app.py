@@ -283,6 +283,38 @@ def delete_paintings():
     #render the delete paintings page with all the paintings
     return render_template("delete_paintings.html", paintings = paintings)
 
+@app.route('/create_painting', methods = ['GET', 'POST'])
+def create_painting():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        #default owner of the painting is the museum
+        owner = 1
+        creator_id = request.form.get('creator_id')
+        period = request.form.get('period')
+        year_finished = request.form.get('year_finished')
+        cost = request.form.get('cost')
+        photo_link = request.form.get('photo_link')
+        sellable = request.form.get('sellable') == 'true'
+        viewable = request.form.get('viewable') == 'true'
+
+        if not title or not period or not cost or not photo_link or not year_finished:
+            flash('Please fill out all fields', 'danger')
+            return redirect(url_for('create_painting'))
+    
+        new_painting = art_piece(owner_id=owner, creator_id=creator_id, title=title, year_finished=year_finished, period=period, cost=cost, photo_link=photo_link, sellable=sellable, viewable=viewable)
+
+        try:
+            db.session.add(new_painting)
+            db.session.commit()
+            flash(f'Painting "{title}" created successfully', 'success')
+            return redirect(url_for('create_painting'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating painting: {e}', 'danger')
+            return redirect(url_for('create_painting'))
+    creators = creator.query.all()
+    return render_template("create_painting.html", creators=creators)
+
 
 # TODO: rework this, this is bad
 @app.route('/update_paintings', methods=['GET', 'POST'])
