@@ -321,33 +321,30 @@ def create_painting():
     return render_template("create_painting.html", creators=creators)
 
 
-# TODO: rework this, this is bad
+
 @app.route('/update_paintings', methods=['GET', 'POST'])
 def update_paintings():
     if request.method == 'POST':
-        paintings = art_piece.query.all()
-        for painting in paintings:
-            title = request.form.get(f'title_{painting.piece_id}')
-            period = request.form.get(f'description_{painting.period}')
-            price = request.form.get(f'price_{painting.piece_id}')
-            sellable = request.form.get(f'sellable_{painting.piece_id}') == 'true'
-            viewable = request.form.get(f'viewable_{painting.piece_id}') == 'true'
-
-            if title:
-                painting.title = title
-            if period:
-                painting.description = period
-            if price:
-                painting.cost = price
-            painting.sellable = sellable
-            painting.viewable = viewable
-
-        db.session.commit()
-        flash('All paintings updated successfully', 'success')
-        return redirect(url_for('update_paintings'))
-
-    paintings = art_piece.query.all()
-    return render_template('update_paintings.html', paintings=paintings)
+        try:
+            piece_id = request.form['piece_id']
+            painting = art_piece.query.get(piece_id)
+            painting.title = request.form['title']
+            painting.creator_id = request.form['creator_id']
+            painting.period = request.form['period']
+            painting.year_finished = request.form['year_finished']
+            painting.cost = request.form['cost']
+            painting.photo_link = request.form['photo_link']
+            painting.sellable = 'sellable' in request.form
+            painting.viewable = 'viewable' in request.form
+            db.session.commit()
+            flash(f'Painting "{painting.title}" updated successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating painting: {e}', 'danger')
+    
+    paintings = art_piece.query.order_by(art_piece.piece_id).all()
+    creators = creator.query.all()
+    return render_template("update_paintings.html", paintings=paintings, creators=creators)
 
 # Read creator function for display
 def getcreator():
