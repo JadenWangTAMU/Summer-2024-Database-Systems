@@ -121,6 +121,11 @@ body {
 .form-group {
     margin-bottom: 2vh;
 }
-.create-creator-link{
-    
+.update-button{
+    font-size: 2vh;
+    padding: 1vh;
+    border-radius: 1vh;
+    border: 0;
+    background-color: rgba(16, 162, 82, 0.662);
+    cursor: pointer;
 }
