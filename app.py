@@ -194,8 +194,12 @@ def paintings():
     paintings = paintings_query.paginate(page=page, per_page=per_page)
     #get all the creators so we can display the artist of each painting
     all_creators = creator.query.all()
+
+    #get all the users so we can display the owner of each painting
+    owners = users.query.all()
+
     #render the paintings page with all the required info
-    return render_template("paintings.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
+    return render_template("paintings.html", paintings = paintings.items, creators = all_creators, owners=owners , pagination = paintings, query=query, sort_by = sort_by)
 
 @app.route('/buy_menu', methods = ['GET'])
 def buy_menu():
