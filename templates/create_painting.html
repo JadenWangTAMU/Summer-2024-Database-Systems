@@ -43,7 +43,8 @@
                         <option value="{{ creator.creator_id }}">{{ creator.creator_fname }} {{ creator.creator_lname }}</option>
                     {% endfor %}
                 </select>
-                <a id="create-creator-link" href="{{ url_for('createcreator') }}">Don't see your creator? Create a new one here.</a>
+                <br>
+                <a id="create-creator-link" href="{{ url_for('createcreator') }}" onclick="openCreateCreatorWindow(event)">Don't see your creator? Create a new one here.</a>
             </div>
             <div class="form-group">
                 <label for="period">Period:</label>

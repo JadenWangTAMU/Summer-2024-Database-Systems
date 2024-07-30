@@ -12,7 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 10000); // Duration in milliseconds (10000ms = 10 seconds)
 });
 
-document.getElementById('create-creator-link').addEventListener('click', function(event) {
-    event.preventDefault();
-    window.open(this.href, 'Create Creator', 'width=600,height=400');
-});
+function openCreateCreatorWindow(event) {
+    event.preventDefault(); // Prevent the default link behavior
+    window.open(
+        event.target.href, // URL to open
+        'createcreator', // Window name
+        'width=600,height=400' // Window size
+    );
+}
