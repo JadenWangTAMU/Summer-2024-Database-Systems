@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session, get_flashed_messages
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, inspect, text, exc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Integer, String, VARCHAR, Float, DateTime
 from datetime import datetime
 import os
@@ -224,20 +225,120 @@ def buy_menu():
 
 @app.route('/buy_painting/<int:piece_id>', methods = ['POST'])
 def buy_painting(piece_id):
-    # TODO: need to get the user id from the session so that we can update the owner_id of the painting
-    # can probably get the user id from the session by looking at the users table and finding the user with the email that is in the session
-    # TODO: create a transaction in the transactions table every time a painting is bought
     # TODO: ask the user once they buy a painting if they want to keep it in the gallery. If not then viewable will be set to false and the painting will then have the requirements to be deleted from the database (sellable & viewable = false means the painting should be deleted)
     #might tweak this later
+    buyer_email = session.get("user_email")
+    if not buyer_email:
+        flash('You must be logged in to buy a painting', 'danger')
+        return redirect(url_for('index'))
+    
+    buyer = Users.query.filter_by(email=buyer_email).first()
+    if not buyer:
+        flash('User not found', 'danger')
+        return redirect(url_for('index'))
+    
     painting = art_piece.query.get(piece_id)
     if painting and painting.sellable:
+        #painting is no longer sellable after being bought
         painting.sellable = False
+
+        #create a transaction for the purchase
+        trans = transaction(piece_id=piece_id, buyer_id=buyer.user_id, seller_id=painting.owner_id)
+
+        #change the owner of the painting to the buyer
+        painting.owner_id = buyer.user_id
+        db.session.add(trans)
         db.session.commit()
         flash(f'Painting "{painting.title}" purchased successfully', 'success')
         return redirect(url_for('buy_menu'))
     else:
         flash('Painting not found or not sellable', 'danger')
         return "Painting not available for purchase", 404
+
+@app.route('/delete_paintings', methods = ['GET', 'POST'])
+def delete_paintings():
+    if request.method == 'POST':
+        #get the id of the painting to delete
+        painting_id = request.form['painting_id']
+        try:
+            #try and delete the painting
+            painting = art_piece.query.get(painting_id)
+            if painting:
+                db.session.delete(painting)
+                db.session.commit()
+                flash(f'Painting "{painting.title}" deleted successfully', 'success')
+            else:
+                flash('Painting not found', 'danger')
+        except IntegrityError as e:
+            #if the painting is referenced in another table, it can't be deleted (foreign key constraint)
+            db.session.rollback()
+            flash(f'Error deleting painting: This painting is referenced in another table and therefore can not be deleted as to keep foreign key integrity.', 'danger')
+        except Exception as e:
+            #handle any other unexpected errors
+            db.session.rollback()
+            flash(f'Error deleting painting: {e}', 'danger')
+        #go back to the delete paintings page
+        return redirect(url_for('delete_paintings'))
+    #get all the paintings
+    paintings = art_piece.query.all()
+    #render the delete paintings page with all the paintings
+    return render_template("d_painting.html", paintings = paintings)
+
+@app.route('/create_painting', methods = ['GET', 'POST'])
+def create_painting():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        #default owner of the painting is the museum
+        owner = 1
+        creator_id = request.form.get('creator_id')
+        period = request.form.get('period')
+        year_finished = request.form.get('year_finished')
+        cost = request.form.get('cost')
+        photo_link = request.form.get('photo_link')
+        sellable = request.form.get('sellable') == 'true'
+        viewable = request.form.get('viewable') == 'true'
+
+        if not title or not period or not cost or not photo_link or not year_finished:
+            flash('Please fill out all fields', 'danger')
+            return redirect(url_for('create_painting'))
+    
+        new_painting = art_piece(owner_id=owner, creator_id=creator_id, title=title, year_finished=year_finished, period=period, cost=cost, photo_link=photo_link, sellable=sellable, viewable=viewable)
+
+        try:
+            db.session.add(new_painting)
+            db.session.commit()
+            flash(f'Painting "{title}" created successfully', 'success')
+            return redirect(url_for('create_painting'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating painting: {e}', 'danger')
+            return redirect(url_for('create_painting'))
+    creators = creator.query.all()
+    return render_template("c_painting.html", creators=creators)
+
+@app.route('/update_paintings', methods=['GET', 'POST'])
+def update_paintings():
+    if request.method == 'POST':
+        try:
+            piece_id = request.form['piece_id']
+            painting = art_piece.query.get(piece_id)
+            painting.title = request.form['title']
+            painting.creator_id = request.form['creator_id']
+            painting.period = request.form['period']
+            painting.year_finished = request.form['year_finished']
+            painting.cost = request.form['cost']
+            painting.photo_link = request.form['photo_link']
+            painting.sellable = 'sellable' in request.form
+            painting.viewable = 'viewable' in request.form
+            db.session.commit()
+            flash(f'Painting "{painting.title}" updated successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating painting: {e}', 'danger')
+    
+    paintings = art_piece.query.order_by(art_piece.piece_id).all()
+    creators = creator.query.all()
+    return render_template("u_painting.html", paintings=paintings, creators=creators)
 
 #this is the main function that runs the app
 if __name__ == '__main__':
