@@ -308,7 +308,7 @@ def creatorupdate():
             obj.death_date = death_date
 
         db.session.commit()
-        return updatecreators(feedback_message=f'Successfully updated creator {creator_name}', feedback_type=True)
+        return updatecreators(feedback_message=f'Successfully updated {creator_name}', feedback_type=True)
     except Exception as err:
         db.session.rollback()
         return updatecreators(feedback_message=str(err), feedback_type=False)
@@ -327,14 +327,18 @@ def creatorcreate():
     birth_country = request.form["country"]
     birth_date = request.form["bdate"]
     death_date = request.form["ddate"]
-    nobdate = request.form["nobdate"]
-    ifalive = request.form["ifalive"]
+    nobdate = request.form.get("nobdate")
+    ifalive = request.form.get("ifalive")
 
     if nobdate == 'on':
         birth_date = None
+    elif birth_date == '':
+        return createcreator(feedback_message='Birth date is required unless "Unknown Birth Date" is checked.', feedback_type=False)
 
     if ifalive == 'on':
         death_date = None
+    elif death_date == '':
+        return createcreator(feedback_message='Death date is required unless "Unknown or Alive" is checked.', feedback_type=False)
 
     # Check if a creator with the same first name and last name already exists
     existing_creator = db.session.query(creator).filter_by(
@@ -342,6 +346,13 @@ def creatorcreate():
 
     if existing_creator:
         return createcreator(feedback_message=f'A creator named {creator_fname} {creator_lname} already exists.', feedback_type=False)
+
+    # Check if birth date and death date are missing
+    if birth_date is None and nobdate != 'on':
+        return createcreator(feedback_message='Birth date is required unless "Unknown Birth Date" is checked.', feedback_type=False)
+    
+    if death_date is None and ifalive != 'on':
+        return createcreator(feedback_message='Death date is required unless "Unknown or Alive" is checked.', feedback_type=False)
 
     try:
         new_creator = creator(
@@ -378,22 +389,22 @@ def creatordelete():
     creator_id = creator_names.get(creator_name)
 
     if not creator_id:
-        return deletecreator(feedback_message=f'Creator {creator_name} not found.', feedback_type=False)
+        return deletecreator(feedback_message=f'{creator_name} not found.', feedback_type=False)
 
     try:
         obj = creator.query.filter_by(creator_id=creator_id).first()
         
         if not obj:
-            return deletecreator(feedback_message=f'Creator {creator_name} not found.', feedback_type=False)
+            return deletecreator(feedback_message=f'{creator_name} not found.', feedback_type=False)
         
         # Check if the creator is associated with any art pieces
         associated_art_pieces = db.session.query(art_piece).filter_by(creator_id=creator_id).all()
         if associated_art_pieces:
-            return deletecreator(feedback_message=f'Creator {creator_name} is associated with an art piece, and cannot be deleted.', feedback_type=False)
+            return deletecreator(feedback_message=f'{creator_name} is associated with an art piece, and cannot be deleted.', feedback_type=False)
 
         db.session.delete(obj)
         db.session.commit()
-        return deletecreator(feedback_message=f'Successfully deleted creator {creator_name}', feedback_type=True)
+        return deletecreator(feedback_message=f'Successfully deleted {creator_name}', feedback_type=True)
     except Exception as err:
         db.session.rollback()
         return deletecreator(feedback_message=f'Database error: {err}', feedback_type=False)
