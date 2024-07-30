@@ -253,6 +253,19 @@ def getcreator():
         creator_list.append((creators.creator_fname, creators.creator_lname, creators.birth_country, creators.birth_date, creators.death_date))
     return creator_list
 
+# Read transaction function for display
+def gettransaction():
+    query = select(transaction)
+    result = db.session.execute(query)
+
+    transaction_list = []
+    for transactions in result.scalars():
+        chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
+        buyer=db.session.query(Users).filter(Users.user_id== transactions.buyer_id).first()
+        seller=db.session.query(Users).filter(Users.user_id== transactions.seller_id).first()
+        transaction_list.append((chosen_art_piece.title, buyer.user_fname, buyer.user_lname, seller.user_fname, seller.user_lname, transactions.timestamp))
+    return transaction_list
+
 # Function to get creator names mapped to IDs
 def get_creator_names():
     query = select(creator)
@@ -264,6 +277,31 @@ def get_creator_names():
         creator_names[full_name] = creators.creator_id
     return creator_names
 
+# Function to get user names mapped to IDs
+def get_user_names():
+    query = select(Users)
+    result = db.session.execute(query)
+    
+    user_names = {}
+    for user in result.scalars():
+        full_name = f"{user.user_fname} {user.user_lname}"
+        user_names[full_name] = user.user_id
+    return user_names
+
+# Function to get transaction info mapped to IDs
+def get_transaction_info():
+    query = select(transaction)
+    result = db.session.execute(query)
+    
+    transaction_info = {}
+    for transactions in result.scalars():
+        chosen_art_piece=db.session.query(art_piece).filter(art_piece.piece_id== transactions.piece_id).first()
+        buyer=db.session.query(Users).filter(Users.user_id== transactions.buyer_id).first()
+        seller=db.session.query(Users).filter(Users.user_id== transactions.seller_id).first()
+        full_info = f"{chosen_art_piece.title} {buyer.user_fname} {buyer.user_lname} {seller.user_fname} {seller.user_lname} {transactions.timestamp}"
+        transaction_info[full_info] = transactions.transaction_id
+    return transaction_info
+
 @app.route("/readcreator")
 def readcreators():
     # Get all the creators using the getcreator function
@@ -271,12 +309,28 @@ def readcreators():
     # Render the read creators page with all the required info
     return render_template("r_creator.html", creatorlist=creator_list)
 
+@app.route("/readtransaction")
+def readtransactions():
+    # Get all the transactions using the getcreator function
+    transaction_list = gettransaction()
+    # Render the read transactions page with all the required info
+    return render_template("r_transaction.html", transactionlist=transaction_list)
+
 # update creator function to allow modification 
 @app.route("/updatecreator")
 def updatecreators(feedback_message=None, feedback_type=False):
     creator_names = get_creator_names()
     return render_template("u_creator.html", 
                            creatornames=creator_names.keys(), 
+                           feedback_message=feedback_message, 
+                           feedback_type=feedback_type)
+
+# update transaction function to allow modification 
+@app.route("/updatetransaction")
+def updatetransactions(feedback_message=None, feedback_type=False):
+    transaction_infos = get_transaction_info()
+    return render_template("u_transaction.html", 
+                           transactioninfos=transaction_infos.keys(), 
                            feedback_message=feedback_message, 
                            feedback_type=feedback_type)
 
@@ -320,10 +374,59 @@ def creatorupdate():
     return updatecreators(feedback_message='Successfully updated creator {}'.format(creator_name),
                           feedback_type=True)
 
+@app.route("/transactionupdate", methods=['POST'])
+def transactionupdate():
+    # change transaction piece id to new art piece, transaction buyer_id to new buyer (and change art_piece owner to new buyer), transaction seller_id to new seller, timestamp to new timestamp
+    transaction_info = request.form.get('transactioninfos')
+    title = request.form["title"]
+    buyer_fname = request.form["bfname"]
+    buyer_lname = request.form["blname"]
+    seller_fname = request.form["sfname"]
+    seller_lname = request.form["slname"]
+    timestamp = request.form["timestamp"]
+
+    transaction_infos = get_transaction_info()
+    if transaction_info in transaction_infos:
+        transaction_id = transaction_infos[transaction_info]
+    
+    try:
+        obj = db.session.query(transaction).filter(
+            transaction.transaction_id == transaction_id).first()
+        
+        if obj is None:
+            msg = 'Transaction {} not found.'.format(transaction_info)
+            return updatetransactions(feedback_message=msg, feedback_type=False)
+
+        if title != '':
+            chosen_art_piece=db.session.query(art_piece).filter(art_piece.title== title).first()
+            obj.piece_id = chosen_art_piece.piece_id
+        if buyer_fname != '' and buyer_lname != '':
+            buyer=db.session.query(Users).filter(Users.user_fname== buyer_fname, Users.user_lname== buyer_lname).first()
+            obj.buyer_id = buyer.user_id
+        if seller_fname != '' and seller_lname != '':
+            seller=db.session.query(Users).filter(Users.user_fname== seller_fname, Users.user_lname== seller_lname).first()
+            obj.seller_id = seller.user_id
+        if timestamp != '':
+            obj.timestamp = timestamp
+
+        db.session.commit()
+        return updatetransactions(feedback_message='Successfully updated transaction {}'.format(transaction_info),
+                        feedback_type=True)
+    except Exception as err:
+        db.session.rollback()
+        return updatetransactions(feedback_message=str(err), feedback_type=False)
+
 # create creator function 
 @app.route("/createcreator")
 def createcreator(feedback_message=None, feedback_type=False):
     return render_template("c_creator.html",
+            feedback_message=feedback_message, 
+            feedback_type=feedback_type)
+
+# create transaction function 
+@app.route("/createtransaction")
+def createtransaction(feedback_message=None, feedback_type=False):
+    return render_template("c_transaction.html",
             feedback_message=feedback_message, 
             feedback_type=feedback_type)
 
@@ -349,6 +452,38 @@ def creatorcreate():
     return createcreator(feedback_message='Successfully added creator {}'.format(creator_fname),
                        feedback_type=True)
 
+@app.route("/transactioncreate", methods=['POST'])
+def transactioncreate():
+    title = request.form["title"]
+    buyer_fname = request.form["bfname"]
+    buyer_lname = request.form["blname"]
+    seller_fname = request.form["sfname"]
+    seller_lname = request.form["slname"]
+    timestamp = request.form["timestamp"]
+
+    try:
+        chosen_art_piece=db.session.query(art_piece).filter(art_piece.title == title).first()
+        buyer=db.session.query(Users).filter(Users.user_fname==buyer_fname and Users.user_lname==buyer_lname).first()
+        print(chosen_art_piece.owner_id)
+        seller=db.session.query(Users).filter(Users.user_fname==seller_fname and Users.user_lname==seller_lname).first()
+        if(seller.user_id==chosen_art_piece.owner_id):
+            entry = transaction(piece_id=chosen_art_piece.piece_id, buyer_id=buyer.user_id, seller_id=seller.user_id, timestamp=timestamp)
+            db.session.add(entry)
+            chosen_art_piece.owner_id=buyer.user_id
+            db.session.commit()
+        else:
+            return createtransaction(feedback_message='Incorrect seller {}'.format(title),
+                       feedback_type=False)
+    except exc.IntegrityError as err:
+        db.session.rollback()
+        return createtransaction(feedback_message='A transaction with this info already exists. Create a transaction with different info.'.format(title), feedback_type=False)
+    except Exception as err:
+        db.session.rollback()
+        return createtransaction(feedback_message='Database error: {}'.format(err), feedback_type=False)
+
+    return createtransaction(feedback_message='Successfully added transaction {}'.format(title),
+                       feedback_type=True)
+
 # create delete creator function 
 @app.route("/deletecreator")
 def deletecreator(feedback_message=None, feedback_type=False):
@@ -357,6 +492,16 @@ def deletecreator(feedback_message=None, feedback_type=False):
                            creatornames=creator_names.keys(), 
                            feedback_message=feedback_message, 
                            feedback_type=feedback_type)
+
+# create delete transaction function 
+@app.route("/deletetransaction")
+def deletetransaction(feedback_message=None, feedback_type=False):
+    transaction_infos = get_transaction_info()
+    return render_template("d_transaction.html", 
+                           transactioninfos=transaction_infos.keys(), 
+                           feedback_message=feedback_message, 
+                           feedback_type=feedback_type)
+
 
 @app.route("/creatordelete", methods=['POST'])
 def creatordelete():
@@ -386,6 +531,33 @@ def creatordelete():
         return deletecreator(feedback_message=str(err), feedback_type=False)
 
     return deletecreator(feedback_message=f'Successfully deleted creator {creator_name}', feedback_type=True)
+
+@app.route("/transactiondelete", methods=['POST'])
+def transactiondelete():
+    # give ownership of art piece back to seller
+    transaction_info = request.form.get('transactioninfos')
+    
+    transaction_infos = get_transaction_info()
+    if transaction_info in transaction_infos:
+        transaction_id = transaction_infos[transaction_info]
+    else:
+        return deletetransaction(feedback_message='Transaction not found.', feedback_type=False)
+
+    try:
+        obj = db.session.query(transaction).filter(
+            transaction.transaction_id == transaction_id).first()
+        
+        if obj is None:
+            msg = f'Transaction not found.'
+            return deletetransaction(feedback_message=msg, feedback_type=False)
+        
+        db.session.delete(obj)
+        db.session.commit()
+    except Exception as err:
+        db.session.rollback()
+        return deletetransaction(feedback_message=str(err), feedback_type=False)
+
+    return deletetransaction(feedback_message=f'Successfully deleted transaction', feedback_type=True)
 
 @app.route("/usercreate", methods=['get'])
 def usercreate():
