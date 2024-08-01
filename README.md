@@ -104,7 +104,7 @@ An art piece has the following attributes:
   - Type: Boolean
 
 #### Create
-- A user can create an art piece by filling out all the attributes of the art piece with the exception of the ID since it is auto-incremented. The creator ID is inserted by selecting the creator's name from a dropdown list of all creators in the database. The owner ID is set to 1 by default since the Artfolio Gallery owns all the art pieces.
+- A user can create an art piece by filling out all the attributes of the art piece with the exception of the ID since it is auto-incremented. The creator ID is inserted by selecting the creator's name from a dropdown list of all creators in the database. The owner ID is set to 1 by default since the Artfolio Gallery owns all the art pieces. Within the application, all information has to be filled out in order to create an art piece (other than the ones I mentioned above). Also, certain pieces of information have checks on them. For example, you can not input a string for the year finished or cost attributes. Similar checks are in place for the other inputted attributes as well. 
 
 #### Read
 #### Update
