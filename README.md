@@ -1,5 +1,4 @@
-# Summer-2024-Database-Systems
-The Artfolio Gallery Application
+# CSCE 310 Summer 2024 Database Systems Project (The Artfolio Gallery Application)
 
 ## Requirements
 - Python 3.8 or higher
