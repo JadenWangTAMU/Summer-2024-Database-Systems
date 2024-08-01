@@ -130,7 +130,9 @@ A creator has the following attributes:
 - Death Date
   - Type: Datetime
 #### Create
+- Both an admin and a patron can create a creator, whether through the "Create Creator" button in the home page or through the "Don't see your creator? Create a new one here." redirect link in the create artpiece page. Often times the birth date and death date of an artist are unknown, or they are alive, therefore there are checkboxes placed if the birth and death date values will be NULL. Checking the box will disable the calender input. 
 #### Read
+- Both admins and patrons can read the creators present in the databse. All the details of the creators are displayed in a table format in the app.
 #### Update
 #### Delete
 
