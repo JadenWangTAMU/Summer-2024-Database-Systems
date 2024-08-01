@@ -40,6 +40,8 @@ Run these commands in the terminal:
 3. Install the dependencies
 `pip install -r requirements.txt`
 
+(Within the requirements.txt file, there are all the dependencies that are needed to run the application. Running the command above will install all these dependencies.)
+
 ### Run the application
 Enter the following command in the terminal to run the application:
 `flask run`
