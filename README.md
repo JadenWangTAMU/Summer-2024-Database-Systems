@@ -70,7 +70,51 @@ After logging in, the user will be taken to the main page of the application. Fr
 Here is showcasing of the main page of the application:
 ![Main Page](/static/images/readme_image2.png)
 
-An added features of our application is the ability to buy paintings. You can click the "Buy A Painting" button on the bottom of the main page and view all sellable paintings. You can click on the "Buy" button to purchase a painting. A transaction will automatically be created and pushed to the database detailing who bought the painting from who at what time.
+An added feature of our application is the ability to buy paintings. You can click the "Buy A Painting" button on the bottom of the main page and view all sellable paintings. You can click on the "Buy" button to purchase a painting. A transaction will automatically be created and pushed to the database detailing who bought the painting from who at what time.
 
 Here is showcasing of the buy paintings page:
 ![Buy Paintings](/static/images/readme_image3.png)
+
+
+
+class art_piece(db.Model):
+    piece_id=db.Column(db.Integer, primary_key=True)
+    creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), default = 1)
+    title=db.Column(db.String(100))
+    year_finished=db.Column(db.Integer)
+    cost=db.Column(db.Float)
+    period=db.Column(db.String(200))
+    photo_link=db.Column(db.String(1000))
+    sellable=db.Column(db.Boolean)
+    viewable=db.Column(db.Boolean)
+
+## Entity Specifications
+### Art Piece
+An art piece has the following attributes:
+- ID (Primary Key) (auto-incremented)
+  - Type: Integer (serial)
+- Owner ID (Foreign Key) (gotten from the User entity, default is 1 which is the ID of the Artfolio Gallery)
+  - Type: Integer
+- Creator ID (Foreign Key) (gotten from the Creator entity)
+  - Type: Integer
+- Title
+  - Type: String (100 characters)
+- Year finished
+  - Type: Integer
+- Cost
+  - Type: Float
+- Period (small description of the period the art piece was created in)
+  - Type: String (200 characters)
+- Photo link (link to the photo of the art piece)
+  - Type: String (1000 characters)
+- Sellable (boolean value that determines if the art piece is sellable)
+  - Type: Boolean
+- Viewable (boolean value that determines if the art piece is viewable)
+  - Type: Boolean
+
+### Creator
+
+### User
+
+### Transaction
