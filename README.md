@@ -1,6 +1,6 @@
 # CSCE 310 Summer 2024 Database Systems Project (The Artfolio Gallery Application)
 
-## If everyhing goes well...
+## If everything goes well...
 Our application is hosted in the cloud using Heroku. You can access it by clicking [here](https://csce-310-artfolio-8885d6fafd86.herokuapp.com/).
 
 If for some reason the link is not working, you can follow the instructions below to run the application locally.
