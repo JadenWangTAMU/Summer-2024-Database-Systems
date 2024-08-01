@@ -1,9 +1,9 @@
 # CSCE 310 Summer 2024 Database Systems Project (The Artfolio Gallery Application)
 
-## If everyhing goes well...
+## If everything goes well...
 Our application is hosted in the cloud using Heroku. You can access it by clicking [here](https://csce-310-artfolio-8885d6fafd86.herokuapp.com/).
 
-If for some reason the link is not working, you can follow the instructions below to run the application locally.
+If for some reason the link is not working, the instructions below can be followed to run the application locally.
 
 ## Requirements
 - The only requirements that someone will need to run this application is Python 3.8 or higher and git. You can download Python from [here](https://www.python.org/downloads/) and git from [here](https://git-scm.com/downloads).
@@ -161,6 +161,10 @@ A transaction has the following attributes:
 - Timestamp (date where the transaction takes place)
   - Type: Datetime
 #### Create
+- Both an admin and a patron can create a transaction, whether through the "Create Transaction" button in the home page or through the "Buy" button in the buy menu page. The details of a transaction are chosen through drop down menus so that no invalid data can be inputted. A date is selected from a calendar or manually inputted.
 #### Read
+- A patron can only view a transaction that they participated in, whether they be a seller or a buyer in that transaction. Meanwhile, admins can view all transactions. The details of the transaction are displayed as well.
 #### Update
+- A patron can only update a transaction that they participated in, whether they be a seller or a buyer in that transaction. Meanwhile, admins can update all transactions. When a transaction's art piece is updated, the transaction's art piece changes, the updated art piece's owner id is updated to the transaction buyer, and the old art piece's owner id is updated to its original owner. When a transaction's buyer is updated, the transaction's art piece's owner is changed to the new buyer. When a transaction's seller is updated, the transaction's details are updated but that's it. Finally, when a transaction's date is updated, the transaction's details are updated but that's it.
 #### Delete
+- A patron can only update a transaction that they participated in, whether they be a seller or a buyer in that transaction. Meanwhile, admins can delete all transactions. When a transaction is deleted, the transaction's art piece's owner becomes the transaction's seller, returning the art piece's ownership to its former owner
