@@ -53,4 +53,24 @@ In the terminal, you should see a message that states the application is running
 ![Flask Message](/static/images/readme_image1.png)
 
 ## Application Usage
-Our application starts by greeting the user with a login page. Here is the login information that both Professor Wade and TA 
+Our application starts by greeting the user with a login page. Here is the login information that both Professor Wade and TA Bengali can use to log in:
+
+- Professor Wade
+  - Email: paulinewade@tamu.edu
+  - Password: password
+
+- TA Bengali
+  - Email: vendangibengali@tamu.edu
+  - Password: password
+
+These pieces of login information are used purely to model the behavior of a user logging in. The application will not store any information associated with your email and will not use it for any purpose other than to log you in.
+
+After logging in, the user will be taken to the main page of the application. From here, the application is pretty self-explanatory. Since both Professor Wade and TA Bengali have the same admin permissions, you have access to CRUD operations for all the entites in our application. You can create, read, update, and delete artworks, creators, users, and transactions.
+
+Here is showcasing of the main page of the application:
+![Main Page](/static/images/readme_image2.png)
+
+An added features of our application is the ability to buy paintings. You can click the "Buy A Painting" button on the bottom of the main page and view all sellable paintings. You can click on the "Buy" button to purchase a painting. A transaction will automatically be created and pushed to the database detailing who bought the painting from who at what time.
+
+Here is showcasing of the buy paintings page:
+![Buy Paintings](/static/images/readme_image3.png)
