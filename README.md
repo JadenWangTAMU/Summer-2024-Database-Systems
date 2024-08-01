@@ -6,12 +6,8 @@ Our application is hosted in the cloud using Heroku. You can access it by clicki
 If for some reason the link is not working, you can follow the instructions below to run the application locally.
 
 ## Requirements
-- Python 3.8 or higher
-- Flask
-- SQLAlchemy
-- Flask-SQLAlchemy
-- psycopg2-binary
-- PostgresSQL 16 or higher
+- The only requirement that someone will need to run this application is Python 3.8 or higher. You can download Python from [here](https://www.python.org/downloads/).
+  - There are external libraries that are used in this application. However, further in the README, there are instructions on how to install all these dependencies. 
 
 ## External Dependencies
 - Tembo (used to host a Postgres database in the cloud) (https://tembo.io/)
