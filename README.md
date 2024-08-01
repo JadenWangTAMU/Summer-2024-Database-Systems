@@ -42,4 +42,4 @@ Enter the following command in the terminal to run the application:
 
 In the terminal, you should see a message that states the application is running on a local server. Copy the link and paste it into your browser to view the application.
 
-![Flask Message] (/static/images/readme_image1.png)
+![Flask Message](/static/images/readme_image1.png)
