@@ -6,13 +6,13 @@ Our application is hosted in the cloud using Heroku. You can access it by clicki
 If for some reason the link is not working, you can follow the instructions below to run the application locally.
 
 ## Requirements
-- The only requirement that someone will need to run this application is Python 3.8 or higher. You can download Python from [here](https://www.python.org/downloads/).
+- The only requirements that someone will need to run this application is Python 3.8 or higher and git. You can download Python from [here](https://www.python.org/downloads/) and git from [here](https://git-scm.com/downloads).
   - There are external libraries that are used in this application. However, further in the README, there are instructions on how to install all these dependencies. 
 
-## External Dependencies
+## Useful Technologies used to develop the application (NOT NEEDED TO RUN THE APPLICATION)
 - Tembo (used to host a Postgres database in the cloud) (https://tembo.io/)
 - Heroku (used to host the application) (https://www.heroku.com/)
-- Github (used to host the code) (https://www.github.com/)
+- Github (used to host the code and version control) (https://www.github.com/)
 
 ## Installation
 Download the application code from Github using command:
