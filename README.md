@@ -75,20 +75,6 @@ An added feature of our application is the ability to buy paintings. You can cli
 Here is showcasing of the buy paintings page:
 ![Buy Paintings](/static/images/readme_image3.png)
 
-
-
-class art_piece(db.Model):
-    piece_id=db.Column(db.Integer, primary_key=True)
-    creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), default = 1)
-    title=db.Column(db.String(100))
-    year_finished=db.Column(db.Integer)
-    cost=db.Column(db.Float)
-    period=db.Column(db.String(200))
-    photo_link=db.Column(db.String(1000))
-    sellable=db.Column(db.Boolean)
-    viewable=db.Column(db.Boolean)
-
 ## Entity Specifications
 ### Art Piece
 An art piece has the following attributes:
