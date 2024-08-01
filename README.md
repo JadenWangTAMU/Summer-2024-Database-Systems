@@ -134,7 +134,9 @@ A creator has the following attributes:
 #### Read
 - Both admins and patrons can read the creators present in the databse. All the details of the creators are displayed in a table format in the app.
 #### Update
+- To maintian integrity and legitimacy of data, only admins are allowed to update/modify details of the creators. Patrons do not have access to the update creator page. 
 #### Delete
+- Only admins can delete creators from the database, patrons do not have access to this functionality. To avoid violation of refrential integrity, a creator cannot be deleted if they are associated with an artpiece in the database. To delete a creator, their artpiece has to be deleted from the database, and only then can the creator be deleted.
 
 ### User
 A user has the following attributes:
@@ -155,7 +157,7 @@ New users may be created and are required to have values for all attributes, Fir
 #### Read
 Users have the ability to read all attributes of other users so long as they are logged in as an admin. Patron users may only view their own yser info.
 #### Update
-To update a users info, when changing their email, the same constraints occur where the new email cannot belong to an existing user. Admin users may update any users info. Patrons may only change their own. Patrons may not change their own role to Admin
+To update a users info, when changing their email, the same constraints occur where the new email cannot belong to an existing user. Admin users may update any users info. Patrons may only change their own. Patrons may not change their own role to Admin.
 #### Delete
 Deleting users is restricted to ensure refferential integrity. If a user is included in transaction, or art_piece entities, those entities must be deleted before the application will allow for that user to be deleted. Admins may delete any user given this constriant, Patrons may only delete their own account.
 
