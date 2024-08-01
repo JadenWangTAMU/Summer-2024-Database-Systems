@@ -8,7 +8,7 @@
 - psycopg2-binary
 - PostgresSQL 16 or higher
 
-## External Deps
+## External Dependencies
 - Tembo (used to host a Postgres database in the cloud) (https://tembo.io/)
 - Github (used to host the code) (https://www.github.com/)
 
