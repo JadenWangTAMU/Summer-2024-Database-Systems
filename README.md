@@ -1,5 +1,24 @@
 # Summer-2024-Database-Systems
 
+## Requirements
+- Python 3.8 or higher
+- Flask
+- SQLAlchemy
+- Flask-SQLAlchemy
+- psycopg2-binary
+- PostgresSQL 16 or higher
+
+## External Deps
+- Tembo (used to host a Postgres database in the cloud) (https://tembo.io/)
+- Github (used to host the code) (https://www.github.com/)
+
+## Installation
+Download the application code from Github
+`git clone https://github.com/JadenWangTAMU/Summer-2024-Database-Systems.git`
+
+
+
+
 
 To create the tables specified in the model (run this in terminal):
 ```
