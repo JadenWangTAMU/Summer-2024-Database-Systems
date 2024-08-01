@@ -61,7 +61,7 @@ Our application starts by greeting the user with a login page. Here is the login
   - Email: vendangibengali@tamu.edu
   - Password: password
 
-These pieces of login information are used purely to model the behavior of a user logging in. The application will not store any information associated with your email and will not use it for any purpose other than to log you in.
+These pieces of login information are used purely to model the behavior of a user logging in. The application will not store any information associated with your email and will not use it for any purpose other than to let you access the application.
 
 After logging in, the user will be taken to the main page of the application. From here, the application is pretty self-explanatory. Since both Professor Wade and TA Bengali have the same admin permissions, you have access to CRUD operations for all the entites in our application. You can create, read, update, and delete artworks, creators, users, and transactions.
 
