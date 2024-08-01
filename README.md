@@ -111,18 +111,55 @@ An art piece has the following attributes:
 #### Delete
 
 ### Creator
+A creator has the following attributes:
+- ID (Primary Key) (auto-incremented)
+  - Type: Integer (serial)
+- Creator First Name
+  - Type: String
+- Creator Last Name
+  - Type: String
+- Birth Country
+  - Type: String
+- Birth Date
+  - Type: Datetime
+- Death Date
+  - Type: Datetime
 #### Create
 #### Read
 #### Update
 #### Delete
 
 ### User
+A user has the following attributes:
+- ID (Primary Key) (auto-incremented)
+  - Type: Integer (serial)
+- User First Name
+  - Type: String
+- User Last Name
+  - Type: String
+- Email (must be unique for all users)
+  - Type: String
+- Password
+  - Type: String
+- Role (1 character long)
+  - Type: String
 #### Create
 #### Read
 #### Update
 #### Delete
 
 ### Transaction
+A transaction has the following attributes:
+- ID (Primary Key) (auto-incremented)
+  - Type: Integer (serial)
+- Piece ID (Foreign Key) (gotten from the Art Piece entity)
+  - Type: Integer
+- Buyer ID (Foreign Key) (gotten from the User entity)
+  - Type: Integer
+- Seller ID (Foreign Key) (gotten from the User entity)
+  - Type: Integer
+- Timestamp (date where the transaction takes place)
+  - Type: Datetime
 #### Create
 #### Read
 #### Update
