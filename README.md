@@ -107,8 +107,13 @@ An art piece has the following attributes:
 - A user can create an art piece by filling out all the attributes of the art piece with the exception of the ID since it is auto-incremented. The creator ID is inserted by selecting the creator's name from a dropdown list of all creators in the database. The owner ID is set to 1 by default since the Artfolio Gallery owns all the art pieces. Within the application, all information has to be filled out in order to create an art piece (other than the ones I mentioned above). Also, certain pieces of information have checks on them. For example, you can not input a string for the year finished or cost attributes. Similar checks are in place for the other inputted attributes as well. 
 
 #### Read
+- A user see all the viewable art pieces in the database by clicking on the "read artpiece" button on the home page. The viewable attribute of the art piece determines if the art piece shows up in the read artpiece page. The role of the user does not matter when viewing art pieces. The details of the art piece are displayed as well.
+
 #### Update
+- A user can update an art piece by clicking on the "update artpiece" button on the home page. The user can only update an art piece that they own (if they are a patron) or any art piece (if they are an admin). The user can update all the attributes of the art piece with the exception of the ID since it is auto-incremented. The creator ID is inserted by selecting the creator's name from a dropdown list of all creators in the database. The main use of this page for a patron user will probably be to change the sellable attribute of the art piece they own.
+
 #### Delete
+- A user can delete an art piece by clicking on the "delete artpiece" button on the home page. The user can only delete an art piece that they own (if they are a patron) or any art piece (if they are an admin). Since deleting an art piece can mess up referential integrity, the application will not allow the user to delete an art piece that has been involved in a transaction (this is the only table that references the art piece table). If the user tries to delete an art piece that has been involved in a transaction, the application will display an error message. Otherwise, the art piece will be deleted from the database.
 
 ### Creator
 A creator has the following attributes:
