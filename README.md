@@ -149,9 +149,13 @@ A user has the following attributes:
 - Role (1 character long)
   - Type: String
 #### Create
+New users may be created and are required to have values for all attributes, First name, Last name, Email, Password, and Role. Emails must be unique, you may not add a user who's email belongs to another user in the database. If you are logged in as an admin, you may create admin users. Patrons may only create other Patron users.
 #### Read
+Users have the ability to read all attributes of other users so long as they are logged in as an admin. Patron users may only view their own yser info.
 #### Update
+To update a users info, when changing their email, the same constraints occur where the new email cannot belong to an existing user. Admin users may update any users info. Patrons may only change their own. Patrons may not change their own role to Admin
 #### Delete
+Deleting users is restricted to ensure refferential integrity. If a user is included in transaction, or art_piece entities, those entities must be deleted before the application will allow for that user to be deleted. Admins may delete any user given this constriant, Patrons may only delete their own account.
 
 ### Transaction
 A transaction has the following attributes:
