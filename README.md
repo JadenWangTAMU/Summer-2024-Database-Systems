@@ -1,4 +1,5 @@
 # Summer-2024-Database-Systems
+The Artfolio Gallery Application
 
 ## Requirements
 - Python 3.8 or higher
@@ -15,31 +16,30 @@
 ## Installation
 Download the application code from Github
 `git clone https://github.com/JadenWangTAMU/Summer-2024-Database-Systems.git`
+or
+`git clone https://github.com/JadenWangTAMU/Summer-2024-Database-Systems/`
 
+## Execute code
+Run these commands in the terminal:
 
+### Get all the dependencies
+1. Create a virtual environment (name it whatever you want)
+`python3 -m venv {name of virtual environment}`
 
+2. Activate the virtual environment (for Mac/Linux)
+`source {name of virtual environment}/bin/activate`
 
+if you are using Windows, use this command instead:
 
-To create the tables specified in the model (run this in terminal):
-```
-$ python3
-$ from app import app, db
-  with app.app_context():
-    db.create_all()
-```
+`source {name of virtual environment}/Scripts/activate`
 
-Then, to run the SQL script:
-1. Change your directory to where the script is located
-2. Run this command in your terminal
-   `$ psql -d artfolio_db -U postgres -f 10_paintings.sql`
-3. You will be prompted to input your password for this user and database.
+3. Install the dependencies
+`pip install -r requirements.txt`
 
+### Run the application
+Enter the following command in the terminal to run the application:
+`flask run`
 
-# changes made since last time
-- I messed up the photo links for each painting. Updated them so that they actually show up when viewing the paintings.
-- The character limit on these photo links was too small, so I increased it to 1000 characters.
-- Other than that, everything should work...
+In the terminal, you should see a message that states the application is running on a local server. Copy the link and paste it into your browser to view the application.
 
-# changes part 2 
-- found a way to have a PostgresSQL server in the cloud
-- now everyone should be able to connect to the same database 
+![Flask Message] (/static/images/readme_image1.png)
