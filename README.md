@@ -72,6 +72,12 @@ Here is showcasing of the buy paintings page:
 ![Buy Paintings](/static/images/readme_image3.png)
 
 ## Entity Specifications
+
+### ERD (Entity Relationship Diagram)
+![ERD](/static/images/ERD.jpg)
+
+
+
 ### Art Piece
 An art piece has the following attributes:
 - ID (Primary Key) (auto-incremented)
