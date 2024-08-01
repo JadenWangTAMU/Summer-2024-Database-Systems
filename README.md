@@ -3,7 +3,7 @@
 ## If everything goes well...
 Our application is hosted in the cloud using Heroku. You can access it by clicking [here](https://csce-310-artfolio-8885d6fafd86.herokuapp.com/).
 
-If for some reason the link is not working, you can follow the instructions below to run the application locally.
+If for some reason the link is not working, the instructions below can be followed to run the application locally.
 
 ## Requirements
 - The only requirements that someone will need to run this application is Python 3.8 or higher and git. You can download Python from [here](https://www.python.org/downloads/) and git from [here](https://git-scm.com/downloads).
