@@ -99,8 +99,27 @@ An art piece has the following attributes:
 - Viewable (boolean value that determines if the art piece is viewable)
   - Type: Boolean
 
+#### Create
+- A user can create an art piece by filling out all the attributes of the art piece with the exception of the ID since it is auto-incremented. The creator ID is inserted by selecting the creator's name from a dropdown list of all creators in the database. The owner ID is set to 1 by default since the Artfolio Gallery owns all the art pieces.
+
+#### Read
+#### Update
+#### Delete
+
 ### Creator
+#### Create
+#### Read
+#### Update
+#### Delete
 
 ### User
+#### Create
+#### Read
+#### Update
+#### Delete
 
 ### Transaction
+#### Create
+#### Read
+#### Update
+#### Delete
