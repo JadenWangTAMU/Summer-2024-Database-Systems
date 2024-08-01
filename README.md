@@ -70,7 +70,7 @@ Here is showcasing of the main page of the application:
 
 An added feature of our application is the ability to buy paintings. You can click the "Buy A Painting" button on the bottom of the main page and view all sellable paintings. You can click on the "Buy" button to purchase a painting. A transaction will automatically be created and pushed to the database detailing who bought the painting from who at what time. (keep in mind that only art pieces with the sellable attribute set to true will show up in the buy paintings page and after a painting is bought, the sellable attribute will be set to false)
 
-Here is showcasing of the buy paintings page:
+Here is a showcasing of the buy paintings page:
 ![Buy Paintings](/static/images/readme_image3.png)
 
 ## Entity Specifications
