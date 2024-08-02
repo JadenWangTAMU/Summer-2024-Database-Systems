@@ -179,7 +179,7 @@ def paintings():
     # does the user want to search for a painting?
     if query:
         #filter based on what they searched for
-        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
+        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'), art_piece.viewable == True)
     else:
         #else just get all the paintings that are viewable
         paintings_query = art_piece.query.filter(art_piece.viewable == True)
