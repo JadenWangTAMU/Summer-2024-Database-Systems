@@ -160,7 +160,7 @@ def index():
             #if the user does not exist or the password is incorrect, flash an error message
             flash('Invalid email or password', 'danger')
             return render_template("index.html")
-    return render_template("index.html")
+    return render_template("home.html")
 
 # function to direct user to home after login
 @app.route('/home')
