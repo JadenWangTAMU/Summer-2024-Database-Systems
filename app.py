@@ -320,22 +320,27 @@ def create_painting():
         sellable = request.form.get('sellable') == 'true'
         viewable = request.form.get('viewable') == 'true'
 
+        #check if all the required fields are filled out
         if not title or not period or not cost or not photo_link or not year_finished:
             flash('Please fill out all fields', 'danger')
             return redirect(url_for('create_painting'))
-    
+        #create the painting
         new_painting = art_piece(owner_id=owner, creator_id=creator_id, title=title, year_finished=year_finished, period=period, cost=cost, photo_link=photo_link, sellable=sellable, viewable=viewable)
 
         try:
+            #add the painting to the database
             db.session.add(new_painting)
             db.session.commit()
             flash(f'Painting "{title}" created successfully', 'success')
             return redirect(url_for('create_painting'))
+        #if there is an error, rollback the changes and flash an error message
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating painting: {e}', 'danger')
             return redirect(url_for('create_painting'))
+    #get all the creators so we can display them in the form
     creators = creator.query.all()
+    #render the create painting page
     return render_template("create_painting.html", creators=creators)
 
 
@@ -344,6 +349,7 @@ def create_painting():
 def update_paintings():
     if request.method == 'POST':
         try:
+            #get the values from the form and update the painting
             piece_id = request.form['piece_id']
             painting = art_piece.query.get(piece_id)
             painting.title = request.form['title']
@@ -356,12 +362,14 @@ def update_paintings():
             painting.viewable = 'viewable' in request.form
             db.session.commit()
             flash(f'Painting "{painting.title}" updated successfully', 'success')
+        #if there is an error, rollback the changes and flash an error message
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating painting: {e}', 'danger')
-    
+    #get all the paintings and creators so we can display them in the form
     paintings = art_piece.query.order_by(art_piece.piece_id).all()
     creators = creator.query.all()
+    #render the update paintings page
     return render_template("update_paintings.html", paintings=paintings, creators=creators)
 
 # Read creator function for display
