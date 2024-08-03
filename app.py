@@ -169,6 +169,10 @@ def home():
 
 @app.route('/paintings', methods = ['GET'])
 def paintings():
+    # get user info
+    user_email = session.get('user_email')
+    user = users.query.filter_by(email=user_email).first()
+    user_role = user.role if user else None
     #used for page stuff
     page = request.args.get('page', 1, type=int)
     query = request.args.get('query', '', type=str)
@@ -176,13 +180,16 @@ def paintings():
     #can change this to whatever, decides how many paintings are shown per page
     per_page = 5
 
-    # does the user want to search for a painting?
-    if query:
-        #filter based on what they searched for
-        paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'), art_piece.viewable == True)
+    if user_role == 'A':
+        paintings_query = art_piece.query
     else:
-        #else just get all the paintings that are viewable
-        paintings_query = art_piece.query.filter(art_piece.viewable == True)
+        # does the user want to search for a painting?
+        if query:
+            #filter based on what they searched for
+            paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'), art_piece.viewable == True)
+        else:
+            #else just get all the paintings that are viewable
+            paintings_query = art_piece.query.filter(art_piece.viewable == True)
     
     #find out how the user wants to sort the paintings and sort accordingly
     if sort_by == 'title':
