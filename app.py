@@ -374,7 +374,14 @@ def update_paintings():
             db.session.rollback()
             flash(f'Error updating painting: {e}', 'danger')
     #get all the paintings and creators so we can display them in the form
-    paintings = art_piece.query.order_by(art_piece.piece_id).all()
+    user_email = session.get("user_email")
+    user = users.query.filter_by(email=user_email).first()
+    user_role = user.role if user else None
+    user_id = user.user_id if user else None
+    if user_role == 'A':
+        paintings = art_piece.query.order_by(art_piece.piece_id).all()
+    else:
+        paintings = art_piece.query.filter_by(owner_id=user_id).order_by(art_piece.piece_id).all()
     creators = creator.query.all()
     #render the update paintings page
     return render_template("update_paintings.html", paintings=paintings, creators=creators)
