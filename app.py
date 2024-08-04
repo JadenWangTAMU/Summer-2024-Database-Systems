@@ -180,8 +180,14 @@ def paintings():
     #can change this to whatever, decides how many paintings are shown per page
     per_page = 5
 
+    #based on the user role, either show all paintings or only the ones that are viewable
     if user_role == 'A':
-        paintings_query = art_piece.query
+        if query:
+            #filter based on what they searched for
+            paintings_query = art_piece.query.filter(art_piece.title.ilike(f'%{query}%'))
+        else:
+            #else just get all the paintings
+            paintings_query = art_piece.query
     else:
         # does the user want to search for a painting?
         if query:
