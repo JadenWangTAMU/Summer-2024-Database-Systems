@@ -1,3 +1,4 @@
+<!-- ENTIRE FILE WRITTEN BY BLAKE DEJOHN -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +35,8 @@
             <div class="form-group">
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required>
+                <br>
+                <input type="checkbox" name="unknown_title" id="unknown_title" onchange="toggleInput(this, 'title')"> Unknown Title?
             </div>
             <div class="form-group">
                 <label for="creator_id">Creator:</label>
@@ -49,6 +52,8 @@
             <div class="form-group">
                 <label for="period">Period:</label>
                 <input type="text" id="period" name="period" required>
+                <br>
+                <input type="checkbox" name="unknown_period" id="unknown_period" onchange="toggleInput(this, 'period')"> Unknown Period?
             </div>
             <div class="form-group">
                 <label for="year_finished">Year Finished:</label>

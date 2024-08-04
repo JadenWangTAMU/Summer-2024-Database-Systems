@@ -8,6 +8,7 @@ import pytz
 import os
 import psycopg2
 
+# Written by Blake Dejohn
 type_mapping = {
     Integer: 'integer',
     String: 'varchar',
@@ -16,7 +17,7 @@ type_mapping = {
     DateTime: 'timestamp'
 }
 
-
+# Written by Blake Dejohn
 #checks if tables in the database are different from the ones in the models
 def check_db():
     #get the tables in the database and the models
@@ -55,6 +56,7 @@ def check_db():
     #if the tables and columns are the same, return False
     return False
 
+# Written by Blake Dejohn
 #checks if the database is empty
 def is_db_empty():
     #get all the tables in the database
@@ -67,6 +69,7 @@ def is_db_empty():
     #if all tables are empty, return True
     return True
 
+# Written by Blake Dejohn
 #use the sql script to populate the database
 def populate_db():
     #get the sql script
@@ -78,6 +81,7 @@ def populate_db():
     #commit the changes to the database
     db.session.commit()
 
+# Written by Blake Dejohn
 #initializes the database, if the tables in the database are different from the ones in the models, it drops the tables and creates new ones
 #also populates the database with some data if it is empty
 def init_db():
@@ -104,6 +108,7 @@ app.secret_key = 'secret string'
 
 db = SQLAlchemy(app)
 
+# Written by Jaden Wang (Blake Dejohn edited the art_piece class)
 class art_piece(db.Model):
     piece_id=db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('creator.creator_id'))
@@ -139,8 +144,10 @@ class transaction(db.Model):
     seller_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     timestamp=db.Column(db.DateTime, default= lambda: datetime.now(pytz.timezone('US/Central')))
 
+# Written by Blake Dejohn
 init_db()
 
+# Written by Blake Dejohn
 @app.route("/", methods=['GET','POST'])
 def index():
     if request.method == 'POST':
@@ -162,11 +169,13 @@ def index():
             return render_template("index.html")
     return render_template("index.html")
 
+# Written by Blake Dejohn
 # function to direct user to home after login
 @app.route('/home')
 def home():
     return render_template('home.html')
 
+# Written by Blake Dejohn
 @app.route('/paintings', methods = ['GET'])
 def paintings():
     # get user info
@@ -214,6 +223,7 @@ def paintings():
     #render the paintings page with all the required info
     return render_template("paintings.html", paintings = paintings.items, creators = all_creators, owners=owners , pagination = paintings, query=query, sort_by = sort_by)
 
+# Written by Blake Dejohn
 @app.route('/buy_menu', methods = ['GET'])
 def buy_menu():
     #used for page stuff
@@ -244,10 +254,9 @@ def buy_menu():
     #render the paintings page with all the required info
     return render_template("buy_menu.html", paintings = paintings.items, creators = all_creators, pagination = paintings, query=query, sort_by = sort_by)
 
+# Written by Blake Dejohn
 @app.route('/buy_painting/<int:piece_id>', methods = ['POST'])
 def buy_painting(piece_id):
-    # TODO: ask the user once they buy a painting if they want to keep it in the gallery. If not then viewable will be set to false and the painting will then have the requirements to be deleted from the database (sellable & viewable = false means the painting should be deleted)
-    #might tweak this later
     buyer_email = session.get("user_email")
     if not buyer_email:
         flash('You must be logged in to buy a painting', 'danger')
@@ -276,6 +285,7 @@ def buy_painting(piece_id):
         flash('Painting not found or not sellable', 'danger')
         return "Painting not available for purchase", 404
 
+# Written by Blake Dejohn
 @app.route('/delete_paintings', methods = ['GET', 'POST'])
 def delete_paintings():
     user_email = session.get("user_email")
@@ -319,6 +329,7 @@ def delete_paintings():
     #render the delete paintings page with all the paintings
     return render_template("delete_paintings.html", paintings = paintings)
 
+# Written by Blake Dejohn
 @app.route('/create_painting', methods = ['GET', 'POST'])
 def create_painting():
     if request.method == 'POST':
@@ -332,6 +343,11 @@ def create_painting():
         photo_link = request.form.get('photo_link')
         sellable = request.form.get('sellable') == 'true'
         viewable = request.form.get('viewable') == 'true'
+
+        if request.form.get('unknown_period'):
+            period = 'Unknown'
+        if request.form.get('unknown_title'):
+            title = 'Unknown'
 
         #check if all the required fields are filled out
         if not title or not period or not cost or not photo_link or not year_finished:
@@ -356,8 +372,7 @@ def create_painting():
     #render the create painting page
     return render_template("create_painting.html", creators=creators)
 
-
-
+# Written by Blake Dejohn
 @app.route('/update_paintings', methods=['GET', 'POST'])
 def update_paintings():
     if request.method == 'POST':
